@@ -1,0 +1,33 @@
+name: System Tests
+
+on:
+  pull_request_target:
+    types: [ labeled ]
+
+jobs:
+  build:
+    name: System Tests
+    # Since this has access to secrets, only run if the PR has manually been
+    # deemed 'safe' to run by a maintainer.
+    if: ${{ github.event.label.name == 'run-ci' }}
+    runs-on: ubuntu-latest
+    env:
+      BACKENDS: "bigquery"
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.7", "3.9"]
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: set up bigquery credentials
+      run: echo '${{ secrets.GCLOUD_SERVICE_KEY }}' > gcloud-service-key.json
+
+    - name: set up environment
+      run: GOOGLE_BIGQUERY_PROJECT_ID="ibis-gbq" GOOGLE_APPLICATION_CREDENTIALS=gcloud-service-key.json ./ci/setup_env.sh "${{ matrix.python_version }}" "$BACKENDS"
+
+    - name: run tests
+      run: PYTEST_BACKENDS=$BACKENDS PYTEST_EXPRESSION="not hdfs" GOOGLE_BIGQUERY_PROJECT_ID="ibis-gbq" GOOGLE_APPLICATION_CREDENTIALS=gcloud-service-key.json ./ci/run_tests.sh
