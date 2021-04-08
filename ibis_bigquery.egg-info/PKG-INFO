@@ -1,0 +1,16 @@
+Metadata-Version: 1.2
+Name: ibis-bigquery
+Version: 0.1.dev3+g19846c0.d20210409
+Summary: Ibis BigQuery backend
+Home-page: https://github.com/ibis-project/ibis-bigquery
+License: Apache Software License
+Description: # Ibis BigQuery backend
+        
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Science/Research
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering
+Requires-Python: >=3.7

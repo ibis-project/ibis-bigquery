@@ -1,0 +1,51 @@
+name: System Tests
+
+on:
+  pull_request_target:
+    types: [ labeled ]
+
+jobs:
+  build:
+    name: System Tests
+    # Since this has access to secrets, only run if the PR has manually been
+    # deemed 'safe' to run by a maintainer.
+    # https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+    if: ${{ github.event.label.name == 'run-ci' }}
+    runs-on: ubuntu-latest
+    env:
+      BACKENDS: "bigquery"
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.7", "3.9"]
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: set up python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: checkout ibis
+      uses: actions/checkout@v2
+      with:
+        repository: ibis-project/ibis
+        path: ibis
+
+    - name: install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install ./ibis
+        python -m pip install .
+        python -m pip install pytest
+
+    - name: set up bigquery credentials
+      run: ./ci/decrypt_secret.sh
+      env:
+        GCLOUD_KEY_PASSPHRASE: ${{ secrets.GCLOUD_KEY_PASSPHRASE }}
+
+    - name: run tests
+      run: GOOGLE_BIGQUERY_PROJECT_ID="ibis-gbq" GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/gcloud-service-key.json" python -m pytest tests

@@ -405,7 +405,7 @@ class BigQueryClient(SQLClient):
             self.dataset,
         ) = parse_project_and_dataset(project_id, dataset_id)
         self.client = bq.Client(
-            project=self.data_project,
+            project=self.billing_project,
             credentials=credentials,
             client_info=_create_client_info(application_name),
         )
@@ -505,7 +505,9 @@ class BigQueryClient(SQLClient):
 
     def list_databases(self, like=None):
         results = [
-            dataset.dataset_id for dataset in self.client.list_datasets()
+            dataset.dataset_id for dataset in self.client.list_datasets(
+                project=self.data_project
+            )
         ]
         if like:
             results = [

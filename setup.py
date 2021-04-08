@@ -1,7 +1,8 @@
-"""Ibis OmniSciDB backend."""
+"""Ibis BigQuery backend."""
 import os
 
 import setuptools
+
 
 BASE_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -15,7 +16,7 @@ setuptools.setup(
     python_requires='>=3.7',
     install_requires=[
         'ibis-framework',  # TODO require ibis 2.0 when it's released
-        'google-cloud-bigquery-core >=1.12.0,<1.24.0dev',
+        'google-cloud-bigquery >=1.12.0,<3.0.0dev',
         'pydata-google-auth',
     ],
     setup_requires=['setuptools_scm'],

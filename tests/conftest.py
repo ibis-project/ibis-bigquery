@@ -6,7 +6,7 @@ from google.oauth2 import service_account
 
 import ibis
 import ibis.expr.types as ir
-from ibis.backends import bigquery as bq
+import ibis_bigquery
 from ibis.backends.tests.base import (
     BackendTest,
     RoundAwayFromZero,
@@ -15,6 +15,8 @@ from ibis.backends.tests.base import (
 
 PROJECT_ID = os.environ.get('GOOGLE_BIGQUERY_PROJECT_ID', 'ibis-gbq')
 DATASET_ID = 'testing'
+
+bq = ibis_bigquery.Backend()
 
 
 def _credentials():

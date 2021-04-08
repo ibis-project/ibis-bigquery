@@ -13,7 +13,7 @@ import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.types as ir
 
-from ..client import bigquery_param
+from ibis_bigquery.client import bigquery_param
 
 pytestmark = pytest.mark.bigquery
 
