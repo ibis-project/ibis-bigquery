@@ -1,0 +1,40 @@
+name: Main
+
+on:
+  push:
+    branches: master
+  pull_request:
+    branches: master
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: checkout
+      uses: actions/checkout@v1
+
+    - name: setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.7"
+
+    - name: install dependencies
+      run: |
+        python -m pip install -r requirements.txt
+        python -m pip install -e .
+    - name: lint
+      run: flake8 .
+
+    - name: mypy
+      run: mypy --ignore-missing-imports .
+      if: always()
+
+    - name: pydocstyle
+      run: pydocstyle .
+      if: always()
+
+    - name: isort
+      run: isort --check-only .
+      if: always()
