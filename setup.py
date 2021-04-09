@@ -17,6 +17,8 @@ setuptools.setup(
     install_requires=[
         'ibis-framework',  # TODO require ibis 2.0 when it's released
         'google-cloud-bigquery >=1.12.0,<3.0.0dev',
+        'google-cloud-bigquery-storage >=1.0.0,<3.0.0dev',
+        'pyarrow >=1.0.0,<4.0.0dev',
         'pydata-google-auth',
     ],
     setup_requires=['setuptools_scm'],
