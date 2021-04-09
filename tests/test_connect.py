@@ -6,9 +6,11 @@ from google.auth import credentials as auth
 from google.cloud import bigquery as bq
 
 import ibis
-from ibis.backends import bigquery as bq_backend
+import ibis_bigquery
 
 pytestmark = pytest.mark.bigquery
+
+bq_backend = ibis_bigquery.Backend()
 
 
 def test_repeated_project_name(project_id, credentials):
