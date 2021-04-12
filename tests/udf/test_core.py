@@ -3,7 +3,6 @@ import sys
 import tempfile
 
 import pytest
-from ibis.compat import PY38
 
 from ibis_bigquery.udf.core import PythonToJavaScriptTranslator, SymbolTable
 
