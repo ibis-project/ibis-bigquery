@@ -5,7 +5,6 @@ import ibis.expr.datatypes as dt
 import pandas as pd
 import pandas.testing as tm
 import pytest
-from ibis.compat import PY38
 from pytest import param
 
 import ibis_bigquery
