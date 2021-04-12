@@ -5,6 +5,8 @@ on:
     branches: master
   pull_request:
     branches: master
+  schedule:
+    - cron: 0 3 * * *
 
 jobs:
   lint:
@@ -40,3 +42,28 @@ jobs:
     - name: isort
       run: isort --check-only .
       if: always()
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: checkout
+      uses: actions/checkout@v1
+
+    - name: checkout ibis
+      uses: actions/checkout@v2
+      with:
+        repository: ibis-project/ibis
+        path: ibis
+
+    - name: setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.7"
+
+    - name: install dependencies
+      run: ./ci/install_deps.sh
+
+    - name: run tests
+      run: python -m pytest tests/unit
