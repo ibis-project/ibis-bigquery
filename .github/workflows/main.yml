@@ -49,6 +49,12 @@ jobs:
     - name: checkout
       uses: actions/checkout@v1
 
+    - name: checkout ibis
+      uses: actions/checkout@v2
+      with:
+        repository: ibis-project/ibis
+        path: ibis
+
     - name: setup python
       uses: actions/setup-python@v2
       with:
