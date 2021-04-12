@@ -31,9 +31,11 @@ jobs:
       run: mypy --ignore-missing-imports .
       if: always()
 
-    - name: pydocstyle
-      run: pydocstyle .
-      if: always()
+    # TODO: don't ignore pydocstyle
+    # https://github.com/ibis-project/ibis-bigquery/issues/13
+    # - name: pydocstyle
+    #   run: pydocstyle --match-dir='^(?!tests|.*udf).*' .
+    #   if: always()
 
     - name: isort
       run: isort --check-only .

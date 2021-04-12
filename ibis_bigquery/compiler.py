@@ -1,3 +1,5 @@
+"""Module to convert from Ibis expression to SQL string."""
+
 import base64
 import datetime
 from functools import partial
@@ -22,36 +24,46 @@ from .datatypes import ibis_type_to_bigquery_type
 
 
 def build_ast(expr, context):
+    """Create a QueryAST from an Ibis expression."""
     builder = BigQueryQueryBuilder(expr, context=context)
     return builder.get_result()
 
 
 class BigQueryUDFNode(ops.ValueOp):
-    pass
+    """Represents use of a UDF."""
 
 
 class BigQuerySelectBuilder(comp.SelectBuilder):
+    """Transforms expression IR to a query pipeline."""
+
     @property
     def _select_class(self):
         return BigQuerySelect
 
 
 class BigQueryUDFDefinition(comp.DDL):
+    """Represents definition of a temporary UDF."""
+
     def __init__(self, expr, context):
         self.expr = expr
         self.context = context
 
     def compile(self):
+        """Generate UDF string from definition."""
         return self.expr.op().js
 
 
 class BigQueryUnion(comp.Union):
+    """Union of tables."""
+
     @staticmethod
     def keyword(distinct):
+        """Use disctinct UNION if distinct is True."""
         return 'UNION DISTINCT' if distinct else 'UNION ALL'
 
 
 def find_bigquery_udf(expr):
+    """Filter which includes only UDFs from expression tree."""
     if isinstance(expr.op(), BigQueryUDFNode):
         result = expr
     else:
@@ -60,11 +72,13 @@ def find_bigquery_udf(expr):
 
 
 class BigQueryQueryBuilder(comp.QueryBuilder):
+    """Generator of QueryASTs."""
 
     select_builder = BigQuerySelectBuilder
     union_class = BigQueryUnion
 
     def generate_setup_queries(self):
+        """Generate DDL for temporary resources."""
         queries = map(
             partial(BigQueryUDFDefinition, context=self.context),
             lin.traverse(find_bigquery_udf, self.expr),
@@ -78,6 +92,8 @@ class BigQueryQueryBuilder(comp.QueryBuilder):
 
 
 class BigQueryContext(comp.QueryContext):
+    """Recorder of information used in AST to SQL conversion."""
+
     def _to_sql(self, expr, ctx):
         builder = BigQueryQueryBuilder(expr, context=ctx)
         query_ast = builder.get_result()
@@ -102,11 +118,13 @@ bigquery_cast = Dispatcher('bigquery_cast')
 
 @bigquery_cast.register(str, dt.Timestamp, dt.Integer)
 def bigquery_cast_timestamp_to_integer(compiled_arg, from_, to):
+    """Convert TIMESTAMP to INT64 (seconds since Unix epoch)."""
     return 'UNIX_MICROS({})'.format(compiled_arg)
 
 
 @bigquery_cast.register(str, dt.DataType, dt.DataType)
 def bigquery_cast_generate(compiled_arg, from_, to):
+    """Cast to desired type."""
     sql_type = ibis_type_to_bigquery_type(to)
     return 'CAST({} AS {})'.format(compiled_arg, sql_type)
 
@@ -425,6 +443,8 @@ _operation_registry = {
 
 
 class BigQueryExprTranslator(BaseExprTranslator):
+    """Translate expressions to strings."""
+
     _registry = _operation_registry
     _rewrites = BaseExprTranslator._rewrites.copy()
 
@@ -443,6 +463,7 @@ rewrites = BigQueryExprTranslator.rewrites
 
 @compiles(ops.DayOfWeekIndex)
 def bigquery_day_of_week_index(t, e):
+    """Convert timestamp to day-of-week integer."""
     arg = e.op().args[0]
     arg_formatted = t.translate(arg)
     return 'MOD(EXTRACT(DAYOFWEEK FROM {}) + 5, 7)'.format(arg_formatted)
@@ -450,17 +471,20 @@ def bigquery_day_of_week_index(t, e):
 
 @rewrites(ops.DayOfWeekName)
 def bigquery_day_of_week_name(e):
+    """Convert TIMESTAMP to day-of-week string."""
     arg = e.op().args[0]
     return arg.strftime('%A')
 
 
 @compiles(ops.Divide)
 def bigquery_compiles_divide(t, e):
+    """Floating point division."""
     return 'IEEE_DIVIDE({}, {})'.format(*map(t.translate, e.op().args))
 
 
 @compiles(ops.Strftime)
 def compiles_strftime(translator, expr):
+    """Timestamp formatting."""
     arg, format_string = expr.op().args
     arg_type = arg.type()
     strftime_format_func_name = STRFTIME_FORMAT_FUNCTIONS[type(arg_type)]
@@ -480,6 +504,7 @@ def compiles_strftime(translator, expr):
 
 @compiles(ops.StringToTimestamp)
 def compiles_string_to_timestamp(translator, expr):
+    """Timestamp parsing."""
     arg, format_string, timezone_arg = expr.op().args
     fmt_string = translator.translate(format_string)
     arg_formatted = translator.translate(arg)
@@ -492,6 +517,7 @@ def compiles_string_to_timestamp(translator, expr):
 
 
 class BigQueryTableSetFormatter(BaseTableSetFormatter):
+
     def _quote_identifier(self, name):
         if re.match(r'^[A-Za-z][A-Za-z_0-9]*$', name):
             return name
