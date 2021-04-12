@@ -1,14 +1,16 @@
-name: System Tests
+name: System Tests (PR)
 
 on:
-  push:
-    branches: master
-  schedule:
-    - cron: 0 2 * * *
+  pull_request_target:
+    types: [ labeled ]
 
 jobs:
   build:
     name: System Tests
+    # Since this has access to secrets, only run if the PR has manually been
+    # deemed 'safe' to run by a maintainer.
+    # https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+    if: ${{ github.event.label.name == 'run-ci' }}
     runs-on: ubuntu-latest
     env:
       BACKENDS: "bigquery"
@@ -19,6 +21,8 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: set up python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
