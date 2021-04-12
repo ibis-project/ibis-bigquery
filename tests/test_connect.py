@@ -1,11 +1,11 @@
 from unittest import mock
 
+import ibis
 import pydata_google_auth
 import pytest
 from google.auth import credentials as auth
 from google.cloud import bigquery as bq
 
-import ibis
 import ibis_bigquery
 
 pytestmark = pytest.mark.bigquery

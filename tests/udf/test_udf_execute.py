@@ -1,13 +1,12 @@
 import os
 
+import ibis
+import ibis.expr.datatypes as dt
 import pandas as pd
 import pandas.testing as tm
 import pytest
-from pytest import param
-
-import ibis
-import ibis.expr.datatypes as dt
 from ibis.compat import PY38
+from pytest import param
 
 import ibis_bigquery
 from ibis_bigquery import udf  # noqa: E402

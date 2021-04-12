@@ -1,17 +1,14 @@
 import os
 from pathlib import Path
 
-import pytest
-from google.oauth2 import service_account
-
 import ibis
 import ibis.expr.types as ir
+import pytest
+from google.oauth2 import service_account
+from ibis.backends.tests.base import (BackendTest, RoundAwayFromZero,
+                                      UnorderedComparator)
+
 import ibis_bigquery
-from ibis.backends.tests.base import (
-    BackendTest,
-    RoundAwayFromZero,
-    UnorderedComparator,
-)
 
 PROJECT_ID = os.environ.get('GOOGLE_BIGQUERY_PROJECT_ID', 'ibis-gbq')
 DATASET_ID = 'testing'

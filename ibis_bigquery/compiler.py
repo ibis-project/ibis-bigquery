@@ -2,11 +2,6 @@ import base64
 import datetime
 from functools import partial
 
-import numpy as np
-import regex as re
-import toolz
-from multipledispatch import Dispatcher
-
 import ibis
 import ibis.backends.base_sqlalchemy.compiler as comp
 import ibis.common.exceptions as com
@@ -14,18 +9,14 @@ import ibis.expr.datatypes as dt
 import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
 import ibis.expr.types as ir
-from ibis.backends.base.sql import (
-    fixed_arity,
-    literal,
-    operation_registry,
-    reduction,
-    unary,
-)
-from ibis.backends.base_sql.compiler import (
-    BaseExprTranslator,
-    BaseSelect,
-    BaseTableSetFormatter,
-)
+import numpy as np
+import regex as re
+import toolz
+from ibis.backends.base.sql import (fixed_arity, literal, operation_registry,
+                                    reduction, unary)
+from ibis.backends.base_sql.compiler import (BaseExprTranslator, BaseSelect,
+                                             BaseTableSetFormatter)
+from multipledispatch import Dispatcher
 
 from .datatypes import ibis_type_to_bigquery_type
 

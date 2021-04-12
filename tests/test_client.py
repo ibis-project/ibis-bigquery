@@ -2,16 +2,15 @@ import collections
 import datetime
 import decimal
 
+import ibis
+import ibis.expr.datatypes as dt
+import ibis.expr.types as ir
 import numpy as np
 import pandas as pd
 import pandas.testing as tm
 import pytest
 import pytz
 from google.api_core import exceptions
-
-import ibis
-import ibis.expr.datatypes as dt
-import ibis.expr.types as ir
 
 from ibis_bigquery.client import bigquery_param
 

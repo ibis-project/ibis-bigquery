@@ -1,13 +1,13 @@
 import datetime
 
-import pandas as pd
-import pytest
-
 import ibis
-import ibis_bigquery as bq
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
+import pandas as pd
+import pytest
 from ibis.expr.types import TableExpr
+
+import ibis_bigquery as bq
 
 pytestmark = pytest.mark.bigquery
 
