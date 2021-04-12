@@ -360,12 +360,11 @@ def parse_project_and_dataset(
     None
 
     """
-    try:
-        data_project, dataset = dataset.split('.')
-    except (ValueError, AttributeError):
-        billing_project = data_project = project
-    else:
+    if dataset is not None and "." in dataset:
+        data_project, dataset = dataset.split(".")
         billing_project = project
+    else:
+        billing_project = data_project = project
 
     return data_project, billing_project, dataset
 

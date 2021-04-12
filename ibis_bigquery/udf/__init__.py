@@ -2,6 +2,7 @@ import collections
 import functools
 import inspect
 import itertools
+from typing import Dict, Iterable
 
 import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
@@ -15,7 +16,7 @@ from ..udf.core import PythonToJavaScriptTranslator
 
 __all__ = ('udf',)
 
-_udf_name_cache = collections.defaultdict(itertools.count)
+_udf_name_cache : Dict[str, Iterable[int]] = collections.defaultdict(itertools.count)
 
 
 def create_udf_node(name, fields):

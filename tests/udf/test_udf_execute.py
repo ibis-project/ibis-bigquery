@@ -11,14 +11,6 @@ from pytest import param
 import ibis_bigquery
 from ibis_bigquery import udf  # noqa: E402
 
-if PY38:
-    # ref: https://github.com/ibis-project/ibis/issues/2098
-    # note: UDF is already skipt on CI
-    pytestmark = [pytest.mark.bigquery, pytest.mark.udf]
-else:
-    pytestmark = pytest.mark.bigquery
-
-
 PROJECT_ID = os.environ.get('GOOGLE_BIGQUERY_PROJECT_ID', 'ibis-gbq')
 DATASET_ID = 'testing'
 
