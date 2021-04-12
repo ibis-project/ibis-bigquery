@@ -1,14 +1,10 @@
+import ibis.expr.datatypes as dt
 import pytest
 from multipledispatch.conflict import ambiguities
 from pytest import param
 
-import ibis.expr.datatypes as dt
-
-from ibis_bigquery.datatypes import (
-    TypeTranslationContext,
-    UDFContext,
-    ibis_type_to_bigquery_type,
-)
+from ibis_bigquery.datatypes import (TypeTranslationContext, UDFContext,
+                                     ibis_type_to_bigquery_type)
 
 pytestmark = pytest.mark.bigquery
 

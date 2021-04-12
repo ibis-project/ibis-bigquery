@@ -5,13 +5,6 @@ from collections import OrderedDict
 from typing import Optional, Tuple
 
 import google.cloud.bigquery as bq
-import pandas as pd
-import regex as re
-from google.api_core.client_info import ClientInfo
-from google.api_core.exceptions import NotFound
-from multipledispatch import Dispatcher
-from pkg_resources import parse_version
-
 import ibis
 import ibis.common.exceptions as com
 import ibis.expr.datatypes as dt
@@ -19,7 +12,13 @@ import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
+import pandas as pd
+import regex as re
+from google.api_core.client_info import ClientInfo
+from google.api_core.exceptions import NotFound
 from ibis.client import Database, Query, SQLClient
+from multipledispatch import Dispatcher
+from pkg_resources import parse_version
 
 from . import compiler as comp
 from .datatypes import ibis_type_to_bigquery_type

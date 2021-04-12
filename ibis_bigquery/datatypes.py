@@ -1,6 +1,5 @@
-from multipledispatch import Dispatcher
-
 import ibis.expr.datatypes as dt
+from multipledispatch import Dispatcher
 
 
 class TypeTranslationContext:
