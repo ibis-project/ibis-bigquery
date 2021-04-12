@@ -1,8 +1,12 @@
 name: System Tests
 
 on:
+  push:
+    branches: master
   pull_request_target:
     types: [ labeled ]
+  schedule:
+    - cron: 0 2 * * *
 
 jobs:
   build:
@@ -10,14 +14,19 @@ jobs:
     # Since this has access to secrets, only run if the PR has manually been
     # deemed 'safe' to run by a maintainer.
     # https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
-    if: ${{ github.event.label.name == 'run-ci' }}
+    if: ${{
+      github.event.type != 'PullRequestEvent'
+      || (
+        github.event.type == 'PullRequestEvent'
+        && github.event.label.name == 'run-ci'
+      ) }}
     runs-on: ubuntu-latest
     env:
       BACKENDS: "bigquery"
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.7", "3.9"]
+        python_version: ["3.7", "3.8", "3.9"]
     steps:
     - name: checkout
       uses: actions/checkout@v2
