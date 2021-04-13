@@ -9,7 +9,7 @@ BASE_PATH = os.path.abspath(os.path.dirname(__file__))
 setuptools.setup(
     name='ibis-bigquery',
     description='Ibis BigQuery backend',
-    long_description=open(os.path.join(BASE_PATH, 'README.md')).read(),
+    long_description=open(os.path.join(BASE_PATH, 'README.rst')).read(),
     url='https://github.com/ibis-project/ibis-bigquery',
     packages=setuptools.find_packages(),
     python_requires='>=3.7',
