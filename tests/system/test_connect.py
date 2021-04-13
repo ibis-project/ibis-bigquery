@@ -75,7 +75,7 @@ def test_auth_default(project_id, credentials, monkeypatch):
     args, kwargs = mock_calls[0]
     assert len(args) == 1
     scopes = args[0]
-    assert scopes == bq_backend.SCOPES
+    assert scopes == ibis_bigquery.SCOPES
     auth_local_webserver = kwargs["use_local_webserver"]
     auth_cache = kwargs["credentials_cache"]
     assert not auth_local_webserver
@@ -124,7 +124,7 @@ def test_auth_external_data(project_id, credentials, monkeypatch):
     args, _ = mock_calls[0]
     assert len(args) == 1
     scopes = args[0]
-    assert scopes == bq_backend.EXTERNAL_DATA_SCOPES
+    assert scopes == ibis_bigquery.EXTERNAL_DATA_SCOPES
 
 
 def test_auth_cache_reauth(project_id, credentials, monkeypatch):
