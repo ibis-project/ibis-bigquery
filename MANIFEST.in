@@ -1,0 +1,6 @@
+# -*- coding: utf-8 -*-
+include README.rst LICENSE
+recursive-include ibis_bigquery
+recursive-include tests *
+global-exclude *.py[co]
+global-exclude __pycache__
