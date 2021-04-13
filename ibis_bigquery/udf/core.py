@@ -274,6 +274,20 @@ class PythonToJavaScriptTranslator:
             self.visit(left), self.visit(op), self.visit(right)
         )
 
+    def visit_Constant(self, node):
+        value = node.value
+        if value is None:
+            return 'null'
+        if isinstance(value, bool):
+            return 'true' if value else 'false'
+        if isinstance(value, (int, float, str)):
+            return repr(value)
+        raise NotImplementedError(
+            '{!r} constants not yet implemented'.format(
+                value.__class__.__name__
+            )
+        )
+
     def visit_NameConstant(self, node):
         value = node.value
         if value is True:
