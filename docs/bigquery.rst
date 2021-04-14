@@ -1,4 +1,4 @@
-.. currentmodule:: ibis.bigquery.api
+.. currentmodule:: ibis_bigquery
 
 .. _backends.bigquery:
 
@@ -40,8 +40,8 @@ project.
    will still be billed for any and all queries**.
 
 If you want to query data that lives in a different project than the billing
-project you can use the :meth:`ibis.bigquery.client.BigQueryClient.database`
-method of :class:`ibis.bigquery.client.BigQueryClient` objects:
+project you can use the :meth:`ibis_bigquery.client.BigQueryClient.database`
+method of :class:`ibis_bigquery.client.BigQueryClient` objects:
 
 .. code-block:: python
 

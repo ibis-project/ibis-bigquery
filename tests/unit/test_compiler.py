@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from ibis.expr.types import TableExpr
 
-import ibis_bigquery as bq
+import ibis_bigquery
 
 
 @pytest.mark.parametrize(
@@ -35,7 +35,7 @@ import ibis_bigquery as bq
 )
 def test_literal_date(case, expected, dtype):
     expr = ibis.literal(case, type=dtype).year()
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     assert result == f"SELECT EXTRACT(year from {expected}) AS `tmp`"
 
 
@@ -78,14 +78,14 @@ def test_literal_date(case, expected, dtype):
 def test_day_of_week(case, expected, dtype, strftime_func):
     date_var = ibis.literal(case, type=dtype)
     expr_index = date_var.day_of_week.index()
-    result = ibis.bigquery.compile(expr_index)
+    result = ibis_bigquery.compile(expr_index)
     assert (
         result
         == f"SELECT MOD(EXTRACT(DAYOFWEEK FROM {expected}) + 5, 7) AS `tmp`"
     )
 
     expr_name = date_var.day_of_week.full_name()
-    result = ibis.bigquery.compile(expr_name)
+    result = ibis_bigquery.compile(expr_name)
     if strftime_func == 'FORMAT_TIMESTAMP':
         assert (
             result
@@ -105,7 +105,7 @@ def test_day_of_week(case, expected, dtype, strftime_func):
 def test_hash(case, expected, dtype):
     string_var = ibis.literal(case, type=dtype)
     expr = string_var.hash(how="farm_fingerprint")
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     assert result == f"SELECT farm_fingerprint({expected}) AS `tmp`"
 
 
@@ -125,7 +125,7 @@ def test_hash(case, expected, dtype):
 def test_hashbytes(case, expected, how, dtype):
     var = ibis.literal(case, type=dtype)
     expr = var.hashbytes(how=how)
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     assert result == f"SELECT {expected} AS `tmp`"
 
 
@@ -153,7 +153,7 @@ def test_hashbytes(case, expected, how, dtype):
 )
 def test_literal_timestamp_or_time(case, expected, dtype):
     expr = ibis.literal(case, type=dtype).hour()
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     assert result == f"SELECT EXTRACT(hour from {expected}) AS `tmp`"
 
 
@@ -169,7 +169,7 @@ def test_projection_fusion_only_peeks_at_immediate_parent():
     table = table[table.file_date < ibis.date('2017-01-01')]
     table = table.mutate(XYZ=table.val * 2)
     expr = table.join(table.view())[table]
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     expected = """\
 WITH t0 AS (
   SELECT *
@@ -223,7 +223,7 @@ FROM t3
 def test_temporal_truncate(unit, expected_unit, expected_func):
     t = ibis.table([('a', getattr(dt, expected_func.lower()))], name='t')
     expr = t.a.truncate(unit)
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     expected = f"""\
 SELECT {expected_func}_TRUNC(`a`, {expected_unit}) AS `tmp`
 FROM t"""
@@ -234,7 +234,7 @@ FROM t"""
 def test_extract_temporal_from_timestamp(kind):
     t = ibis.table([('ts', dt.timestamp)], name='t')
     expr = getattr(t.ts, kind)()
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     expected = f"""\
 SELECT {kind.upper()}(`ts`) AS `tmp`
 FROM t"""
@@ -243,7 +243,7 @@ FROM t"""
 
 def test_now():
     expr = ibis.now()
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     expected = 'SELECT CURRENT_TIMESTAMP() AS `tmp`'
     assert result == expected
 
@@ -251,7 +251,7 @@ def test_now():
 def test_binary():
     t = ibis.table([('value', 'double')], name='t')
     expr = t["value"].cast(dt.binary).name("value_hash")
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     expected = """\
 SELECT CAST(`value` AS BYTES) AS `tmp`
 FROM t"""
@@ -262,7 +262,7 @@ def test_bucket():
     t = ibis.table([('value', 'double')], name='t')
     buckets = [0, 1, 3]
     expr = t.value.bucket(buckets).name('foo')
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     expected = """\
 SELECT
   CASE
@@ -285,7 +285,7 @@ def test_window_unbounded(kind, begin, end, expected):
     t = ibis.table([('a', 'int64')], name='t')
     kwargs = {kind: (begin, end)}
     expr = t.a.sum().over(ibis.window(**kwargs))
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     assert (
         result
         == f"""\
@@ -302,7 +302,7 @@ def test_large_compile():
     num_columns = 20
     num_joins = 7
 
-    class MockBigQueryClient(bq.BigQueryClient):
+    class MockBigQueryClient(ibis_bigquery.BigQueryClient):
         def __init__(self):
             pass
 

@@ -10,11 +10,9 @@ import ibis_bigquery
 
 pytestmark = pytest.mark.bigquery
 
-bq_backend = ibis_bigquery.Backend()
-
 
 def test_repeated_project_name(project_id, credentials):
-    con = bq_backend.connect(
+    con = ibis_bigquery.connect(
         project_id=project_id,
         dataset_id='{}.testing'.format(project_id),
         credentials=credentials,
@@ -29,12 +27,12 @@ def test_project_id_different_from_default_credentials(monkeypatch):
         return creds, 'default-project-id'
 
     monkeypatch.setattr(pydata_google_auth, 'default', mock_credentials)
-    con = bq_backend.connect(project_id='explicit-project-id',)
+    con = ibis_bigquery.connect(project_id='explicit-project-id',)
     assert con.billing_project == 'explicit-project-id'
 
 
 def test_without_dataset(project_id, credentials):
-    con = bq_backend.connect(
+    con = ibis_bigquery.connect(
         project_id=project_id, dataset_id=None, credentials=credentials,
     )
     with pytest.raises(ValueError, match="Unable to determine BigQuery"):
@@ -46,7 +44,7 @@ def test_application_name_sets_user_agent(
 ):
     mock_client = mock.create_autospec(bq.Client)
     monkeypatch.setattr(bq, 'Client', mock_client)
-    bq_backend.connect(
+    ibis_bigquery.connect(
         project_id=project_id,
         dataset_id='bigquery-public-data.stackoverflow',
         application_name='my-great-app/0.7.0',
@@ -67,7 +65,7 @@ def test_auth_default(project_id, credentials, monkeypatch):
 
     monkeypatch.setattr(pydata_google_auth, "default", mock_default)
 
-    bq_backend.connect(
+    ibis_bigquery.connect(
         project_id=project_id, dataset_id='bigquery-public-data.stackoverflow',
     )
 
@@ -93,7 +91,7 @@ def test_auth_local_webserver(project_id, credentials, monkeypatch):
 
     monkeypatch.setattr(pydata_google_auth, "default", mock_default)
 
-    bq_backend.connect(
+    ibis_bigquery.connect(
         project_id=project_id,
         dataset_id='bigquery-public-data.stackoverflow',
         auth_local_webserver=True,
@@ -114,7 +112,7 @@ def test_auth_external_data(project_id, credentials, monkeypatch):
 
     monkeypatch.setattr(pydata_google_auth, "default", mock_default)
 
-    bq_backend.connect(
+    ibis_bigquery.connect(
         project_id=project_id,
         dataset_id='bigquery-public-data.stackoverflow',
         auth_external_data=True,
@@ -136,7 +134,7 @@ def test_auth_cache_reauth(project_id, credentials, monkeypatch):
 
     monkeypatch.setattr(pydata_google_auth, "default", mock_default)
 
-    bq_backend.connect(
+    ibis_bigquery.connect(
         project_id=project_id,
         dataset_id="bigquery-public-data.stackoverflow",
         auth_cache="reauth",
@@ -159,7 +157,7 @@ def test_auth_cache_none(project_id, credentials, monkeypatch):
 
     monkeypatch.setattr(pydata_google_auth, "default", mock_default)
 
-    bq_backend.connect(
+    ibis_bigquery.connect(
         project_id=project_id,
         dataset_id="bigquery-public-data.stackoverflow",
         auth_cache="none",
@@ -173,7 +171,7 @@ def test_auth_cache_none(project_id, credentials, monkeypatch):
 
 def test_auth_cache_unknown(project_id):
     with pytest.raises(ValueError, match="unexpected value for auth_cache"):
-        bq_backend.connect(
+        ibis_bigquery.connect(
             project_id=project_id,
             dataset_id="bigquery-public-data.stackoverflow",
             auth_cache="not_a_real_cache",
