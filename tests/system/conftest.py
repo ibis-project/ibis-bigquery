@@ -1,8 +1,5 @@
 import os
-from pathlib import Path
 
-import ibis
-import ibis.expr.types as ir
 import pytest
 from google.oauth2 import service_account
 

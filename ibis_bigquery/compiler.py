@@ -14,12 +14,14 @@ import ibis.expr.types as ir
 import numpy as np
 import regex as re
 import toolz
+
 try:
-    from ibis.backends.base.sql import (fixed_arity, literal, operation_registry,
-                                    reduction, unary)
+    from ibis.backends.base.sql import (fixed_arity, literal,
+                                        operation_registry, reduction, unary)
 except ImportError:
-    from ibis.backends.base_sql import (fixed_arity, literal, operation_registry,
-                                    reduction, unary)
+    from ibis.backends.base_sql import (
+        fixed_arity, literal, operation_registry, reduction, unary
+    )
 
 from ibis.backends.base_sql.compiler import (BaseExprTranslator, BaseSelect,
                                              BaseTableSetFormatter)
