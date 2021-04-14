@@ -7,7 +7,6 @@ from typing import Dict, Iterable
 import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
 import ibis.udf.validate as v
-from ibis.compat import PY38  # noqa: F401
 from ibis.expr.signature import Argument as Arg
 
 from ..compiler import BigQueryUDFNode, compiles

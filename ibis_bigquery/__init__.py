@@ -6,13 +6,17 @@ import google.auth.credentials
 import google.cloud.bigquery  # noqa: F401, fail early if bigquery is missing
 import ibis.config
 import pydata_google_auth
-from ibis.backends.base import BaseBackend
 from pydata_google_auth import cache
 
 from . import version as ibis_bigquery_version
 from .client import (BigQueryClient, BigQueryDatabase, BigQueryQuery,
                      BigQueryTable)
 from .compiler import BigQueryExprTranslator, BigQueryQueryBuilder
+
+try:
+    from ibis.backends.base import BaseBackend
+except ImportError:
+    from .backcompat import BaseBackend
 
 try:
     from .udf import udf  # noqa F401

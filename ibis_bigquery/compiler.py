@@ -14,8 +14,13 @@ import ibis.expr.types as ir
 import numpy as np
 import regex as re
 import toolz
-from ibis.backends.base.sql import (fixed_arity, literal, operation_registry,
+try:
+    from ibis.backends.base.sql import (fixed_arity, literal, operation_registry,
                                     reduction, unary)
+except ImportError:
+    from ibis.backends.base_sql import (fixed_arity, literal, operation_registry,
+                                    reduction, unary)
+
 from ibis.backends.base_sql.compiler import (BaseExprTranslator, BaseSelect,
                                              BaseTableSetFormatter)
 from multipledispatch import Dispatcher
@@ -369,9 +374,6 @@ _operation_registry = {
 }
 _operation_registry.update(
     {
-        ops.BitAnd: reduction('BIT_AND'),
-        ops.BitOr: reduction('BIT_OR'),
-        ops.BitXor: reduction('BIT_XOR'),
         ops.ExtractYear: _extract_field('year'),
         ops.ExtractQuarter: _extract_field('quarter'),
         ops.ExtractMonth: _extract_field('month'),
@@ -426,6 +428,21 @@ _operation_registry.update(
         ops.TimestampNow: fixed_arity('CURRENT_TIMESTAMP', 0),
     }
 )
+
+
+def _try_register_op(op_name: str, value):
+    """Register operation if it exists in Ibis.
+
+    This allows us to decouple slightly from ibis-framework releases.
+    """
+    if hasattr(ops, op_name):
+        _operation_registry[getattr(ops, op_name)] = value
+
+
+_try_register_op('BitAnd', reduction('BIT_AND'))
+_try_register_op('BitOr', reduction('BIT_OR'))
+_try_register_op('BitXor', reduction('BIT_XOR'))
+
 
 _invalid_operations = {
     ops.Translate,
