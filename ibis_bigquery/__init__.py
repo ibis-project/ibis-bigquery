@@ -9,6 +9,7 @@ import pydata_google_auth
 from ibis.backends.base import BaseBackend
 from pydata_google_auth import cache
 
+from . import version as ibis_bigquery_version
 from .client import (BigQueryClient, BigQueryDatabase, BigQueryQuery,
                      BigQueryTable)
 from .compiler import BigQueryExprTranslator, BigQueryQueryBuilder
@@ -18,6 +19,8 @@ try:
 except ImportError:
     pass
 
+
+__version__: str = ibis_bigquery_version.__version__
 
 SCOPES = ["https://www.googleapis.com/auth/bigquery"]
 EXTERNAL_DATA_SCOPES = [
