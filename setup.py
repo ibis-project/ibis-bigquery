@@ -1,6 +1,7 @@
 """Ibis BigQuery backend."""
 
 import pathlib
+from typing import Dict
 
 import setuptools
 
@@ -17,10 +18,10 @@ release_status = "Development Status :: 4 - Beta"
 
 package_root = pathlib.Path(__file__).parent
 
-version = {}
+version_dict: Dict[str, str] = {}
 with open(package_root / "ibis_bigquery" / "version.py") as fp:
-    exec(fp.read(), version)
-version = version["__version__"]
+    exec(fp.read(), version_dict)
+version = version_dict["__version__"]
 
 readme_filename = package_root / "README.rst"
 with open(readme_filename, encoding="utf-8") as readme_file:

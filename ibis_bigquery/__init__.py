@@ -20,7 +20,7 @@ except ImportError:
     pass
 
 
-__version__ = ibis_bigquery_version.__version__
+__version__: str = ibis_bigquery_version.__version__  # type: ignore
 
 SCOPES = ["https://www.googleapis.com/auth/bigquery"]
 EXTERNAL_DATA_SCOPES = [
