@@ -242,7 +242,7 @@ def _string_right(translator, expr):
 def _string_substring(translator, expr):
     op = expr.op()
     arg, start, length = op.args
-    if length < 0:
+    if length.op().value < 0:
         raise ValueError('Length parameter should not be a negative value.')
 
     arg_formatted = translator.translate(arg)

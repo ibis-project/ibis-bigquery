@@ -262,8 +262,10 @@ def test_substring():
     t = ibis.table([('value', 'string')], name='t')
     expr = t["value"].substr(3, -1)
     with pytest.raises(Exception) as exception_info:
-        ibis.bigquery.compile(expr)
-    assert str(exception_info.value) == 'Length parameter should not be a negative value.'
+        ibis_bigquery.compile(expr)
+
+    expected = 'Length parameter should not be a negative value.'
+    assert str(exception_info.value) == expected
 
 
 def test_bucket():
