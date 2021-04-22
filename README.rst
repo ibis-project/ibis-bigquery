@@ -51,7 +51,7 @@ Using this library directly:
     import ibis
     import ibis_bigquery
 
-    conn = ibis_bigquery.Backend().connect(
+    conn = ibis_bigquery.connect(
         project_id=YOUR_PROJECT_ID,
         dataset_id='bigquery-public-data.stackoverflow'
     )

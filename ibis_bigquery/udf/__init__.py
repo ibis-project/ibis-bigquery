@@ -7,7 +7,6 @@ from typing import Dict, Iterable
 import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
 import ibis.udf.validate as v
-from ibis.compat import PY38  # noqa: F401
 from ibis.expr.signature import Argument as Arg
 
 from ..compiler import BigQueryUDFNode, compiles
@@ -73,7 +72,7 @@ def udf(input_type, output_type, strict=True, libraries=None):
     --------
     >>> if PY38:
     ...     import pytest; pytest.skip("Issue #2085")
-    >>> from ibis.bigquery import udf
+    >>> from ibis_bigquery import udf
     >>> import ibis.expr.datatypes as dt
     >>> @udf(input_type=[dt.double], output_type=dt.double)
     ... def add_one(x):
