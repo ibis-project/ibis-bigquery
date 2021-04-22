@@ -245,21 +245,8 @@ def _string_substring(translator, expr):
     if length.op().value < 0:
         raise ValueError('Length parameter should not be a negative value.')
 
-    arg_formatted = translator.translate(arg)
-    start_formatted = translator.translate(start)
-    if length is None or isinstance(length.op(), ops.Literal):
-        lvalue = length.op().value if length is not None else None
-        if lvalue:
-            return 'substr({}, {} + 1, {})'.format(
-                arg_formatted, start_formatted, lvalue
-            )
-        else:
-            return 'substr({}, {} + 1)'.format(arg_formatted, start_formatted)
-    else:
-        length_formatted = translator.translate(length)
-        return 'substr({}, {} + 1, {})'.format(
-            arg_formatted, start_formatted, length_formatted
-        )
+    base_substring = operation_registry[ops.Substring]
+    base_substring(translator, expr)
 
 
 def _array_literal_format(expr):
