@@ -5,7 +5,6 @@ from collections import OrderedDict
 from typing import Optional, Tuple
 
 import google.cloud.bigquery as bq
-import ibis
 import ibis.common.exceptions as com
 import ibis.expr.datatypes as dt
 import ibis.expr.lineage as lin
@@ -52,8 +51,10 @@ _USER_AGENT_DEFAULT_TEMPLATE = 'ibis/{}'
 
 
 def _create_client_info(application_name):
-    user_agent = []
+    # Import ibis here to avoid circular imports during backend discovery.
+    import ibis
 
+    user_agent = []
     if application_name:
         user_agent.append(application_name)
 
