@@ -1,3 +1,4 @@
+import ibis  # noqa: F401
 import pytest
 
 import ibis_bigquery.client

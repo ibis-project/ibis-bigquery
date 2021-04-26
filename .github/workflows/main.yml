@@ -46,6 +46,10 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.7", "3.8", "3.9"]
     steps:
 
     - name: checkout
@@ -57,10 +61,10 @@ jobs:
         repository: ibis-project/ibis
         path: ibis
 
-    - name: setup python
+    - name: set up python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: "3.7"
+        python-version: ${{ matrix.python-version }}
 
     - name: install dependencies
       run: ./ci/install_deps.sh
