@@ -4,7 +4,6 @@ from typing import Optional
 
 import google.auth.credentials
 import google.cloud.bigquery  # noqa: F401, fail early if bigquery is missing
-import ibis.config
 import pydata_google_auth
 from pydata_google_auth import cache
 
@@ -56,6 +55,7 @@ class Backend(BaseBackend):
         auth_local_webserver: bool = False,
         auth_external_data: bool = False,
         auth_cache: str = "default",
+        partition_column: Optional[str] = "PARTITIONTIME",
     ) -> BigQueryClient:
         """Create a BigQueryClient for use with Ibis.
 
@@ -95,6 +95,9 @@ class Backend(BaseBackend):
                 Authenticates and does **not** cache credentials.
 
             Defaults to ``'default'``.
+        partition_column : str
+            Identifier to use instead of default ``_PARTITIONTIME`` partition
+            column. Defaults to ``'PARTITIONTIME'``.
 
         Returns
         -------
@@ -140,10 +143,21 @@ class Backend(BaseBackend):
             dataset_id=dataset_id,
             credentials=credentials,
             application_name=application_name,
+            partition_column=partition_column,
         )
 
-    def register_options(self):
-        ibis.config.register_option('partition_col', 'PARTITIONTIME')
+
+def compile(expr, params=None):
+    """Compile an expression for BigQuery.
+    Returns
+    -------
+    compiled : str
+    See Also
+    --------
+    ibis.expr.types.Expr.compile
+    """
+    backend = Backend()
+    return backend.compile(expr, params=params)
 
 
 def connect(
@@ -154,6 +168,7 @@ def connect(
     auth_local_webserver: bool = False,
     auth_external_data: bool = False,
     auth_cache: str = "default",
+    partition_column: Optional[str] = "PARTITIONTIME",
 ) -> BigQueryClient:
     """Create a BigQueryClient for use with Ibis.
 
@@ -193,6 +208,9 @@ def connect(
             Authenticates and does **not** cache credentials.
 
         Defaults to ``'default'``.
+    partition_column : str
+        Identifier to use instead of default ``_PARTITIONTIME`` partition
+        column. Defaults to ``'PARTITIONTIME'``.
 
     Returns
     -------
@@ -208,4 +226,13 @@ def connect(
         auth_local_webserver=auth_local_webserver,
         auth_external_data=auth_external_data,
         auth_cache=auth_cache,
+        partition_column=partition_column,
     )
+
+
+__all__ = [
+    "__version__",
+    "Backend",
+    "compile",
+    "connect",
+]

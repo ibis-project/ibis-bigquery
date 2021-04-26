@@ -290,7 +290,8 @@ class BigQueryTable(ops.DatabaseTable):
     pass
 
 
-def rename_partitioned_column(table_expr, bq_table):
+def rename_partitioned_column(table_expr, bq_table, partition_col):
+    """Rename native partition column to user-defined name."""
     partition_info = bq_table._properties.get('timePartitioning', None)
 
     # If we don't have any partiton information, the table isn't partitioned
@@ -304,14 +305,11 @@ def rename_partitioned_column(table_expr, bq_table):
     # The partition field must be in table_expr columns
     assert partition_field in table_expr.columns
 
-    # User configured partition column name default
-    col = ibis.options.bigquery.partition_col
-
     # No renaming if the config option is set to None or the partition field
     # is not _PARTITIONTIME
-    if col is None or partition_field != NATIVE_PARTITION_COL:
+    if partition_col is None or partition_field != NATIVE_PARTITION_COL:
         return table_expr
-    return table_expr.relabel({NATIVE_PARTITION_COL: col})
+    return table_expr.relabel({NATIVE_PARTITION_COL: partition_col})
 
 
 def parse_project_and_dataset(
@@ -379,6 +377,7 @@ class BigQueryClient(SQLClient):
         dataset_id=None,
         credentials=None,
         application_name=None,
+        partition_column=None,
     ):
         """Construct a BigQueryClient.
 
@@ -391,6 +390,9 @@ class BigQueryClient(SQLClient):
         credentials : google.auth.credentials.Credentials
         application_name : str
             A string identifying your application to Google API endpoints.
+        partition_column : str
+            Identifier to use instead of default ``_PARTITIONTIME`` partition
+            column.
 
         """
         self.query_class = backend.query_class
@@ -407,6 +409,7 @@ class BigQueryClient(SQLClient):
             credentials=credentials,
             client_info=_create_client_info(application_name),
         )
+        self.partition_column = partition_column
 
     def _parse_project_and_dataset(self, dataset):
         if not dataset and not self.dataset:
@@ -431,7 +434,7 @@ class BigQueryClient(SQLClient):
         dataset_ref = self.client.dataset(dataset, project=project)
         table_ref = dataset_ref.table(name)
         bq_table = self.client.get_table(table_ref)
-        return rename_partitioned_column(t, bq_table)
+        return rename_partitioned_column(t, bq_table, self.partition_column)
 
     def _build_ast(self, expr, context):
         result = comp.build_ast(expr, context)

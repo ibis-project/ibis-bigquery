@@ -12,6 +12,7 @@ import pytest
 import pytz
 from google.api_core import exceptions
 
+import ibis_bigquery
 from ibis_bigquery.client import bigquery_param
 
 pytestmark = pytest.mark.bigquery
@@ -70,7 +71,7 @@ def test_compile_toplevel():
 
     # it works!
     expr = t.foo.sum()
-    result = ibis.bigquery.compile(expr)
+    result = ibis_bigquery.compile(expr)
     # FIXME: remove quotes because bigquery can't use anythig that needs
     # quoting?
     expected = """\
@@ -192,16 +193,16 @@ def test_cast_string_to_date(alltypes, df, type):
 
 
 def test_has_partitions(alltypes, parted_alltypes, client):
-    col = ibis.options.bigquery.partition_col
+    col = client.partition_column
     assert col not in alltypes.columns
     assert col in parted_alltypes.columns
 
 
-def test_different_partition_col_name(client):
+def test_different_partition_col_name(monkeypatch, client):
     col = 'FOO_BAR'
-    with ibis.config.option_context('bigquery.partition_col', col):
-        alltypes = client.table('functional_alltypes')
-        parted_alltypes = client.table('functional_alltypes_parted')
+    monkeypatch.setattr(client, 'partition_column', col)
+    alltypes = client.table('functional_alltypes')
+    parted_alltypes = client.table('functional_alltypes_parted')
     assert col not in alltypes.columns
     assert col in parted_alltypes.columns
 
