@@ -4,6 +4,7 @@ import base64
 import datetime
 from functools import partial
 
+import ibis
 import ibis.backends.base_sqlalchemy.compiler as comp
 import ibis.common.exceptions as com
 import ibis.expr.datatypes as dt
@@ -289,8 +290,6 @@ def _literal(translator, expr):
 
 
 def _arbitrary(translator, expr):
-    import ibis
-
     arg, how, where = expr.op().args
 
     if where is not None:
@@ -584,8 +583,6 @@ def compiles_floor(t, e):
 
 @compiles(ops.CMSMedian)
 def compiles_approx(translator, expr):
-    import ibis
-
     expr = expr.op()
     arg = expr.arg
     where = expr.where
@@ -600,8 +597,6 @@ def compiles_approx(translator, expr):
 
 @compiles(ops.Covariance)
 def compiles_covar(translator, expr):
-    import ibis
-
     expr = expr.op()
     left = expr.left
     right = expr.right
