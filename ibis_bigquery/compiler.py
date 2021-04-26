@@ -5,8 +5,16 @@ import datetime
 from functools import partial
 
 import ibis
-import ibis.backends.base_sqlalchemy.compiler as comp
-import ibis.common.exceptions as com
+
+try:
+    import ibis.backends.base_sqlalchemy.compiler as comp
+except ImportError:
+    import ibis.sql.compiler as comp
+try:
+    import ibis.common.exceptions as com
+except ImportError:
+    import ibis.common as com
+
 import ibis.expr.datatypes as dt
 import ibis.expr.lineage as lin
 import ibis.expr.operations as ops
@@ -14,10 +22,37 @@ import ibis.expr.types as ir
 import numpy as np
 import regex as re
 import toolz
-from ibis.backends.base.sql import (fixed_arity, literal, operation_registry,
-                                    reduction, unary)
-from ibis.backends.base_sql.compiler import (BaseExprTranslator, BaseSelect,
-                                             BaseTableSetFormatter)
+
+try:
+    # 2.x
+    from ibis.backends.base.sql import (fixed_arity, literal,
+                                        operation_registry, reduction, unary)
+except ImportError:
+    try:
+        # 1.4
+        from ibis.backends.base_sql import (fixed_arity, literal,
+                                            operation_registry, reduction,
+                                            unary)
+    except ImportError:
+        # 1.2
+        from ibis.impala.compiler import _literal as literal
+        from ibis.impala.compiler import \
+            _operation_registry as operation_registry
+        from ibis.impala.compiler import _reduction as reduction
+        from ibis.impala.compiler import fixed_arity, unary
+
+try:
+    from ibis.backends.base_sql.compiler import (BaseExprTranslator,
+                                                 BaseSelect,
+                                                 BaseTableSetFormatter)
+except ImportError:
+    # 1.2
+    from ibis.impala.compiler import ImpalaExprTranslator as BaseExprTranslator
+    from ibis.impala.compiler import ImpalaSelect as BaseSelect
+    from ibis.impala.compiler import (
+        ImpalaTableSetFormatter as BaseTableSetFormatter
+    )
+
 from multipledispatch import Dispatcher
 
 from .datatypes import ibis_type_to_bigquery_type
@@ -369,18 +404,13 @@ _operation_registry = {
 }
 _operation_registry.update(
     {
-        ops.BitAnd: reduction('BIT_AND'),
-        ops.BitOr: reduction('BIT_OR'),
-        ops.BitXor: reduction('BIT_XOR'),
         ops.ExtractYear: _extract_field('year'),
-        ops.ExtractQuarter: _extract_field('quarter'),
         ops.ExtractMonth: _extract_field('month'),
         ops.ExtractDay: _extract_field('day'),
         ops.ExtractHour: _extract_field('hour'),
         ops.ExtractMinute: _extract_field('minute'),
         ops.ExtractSecond: _extract_field('second'),
         ops.ExtractMillisecond: _extract_field('millisecond'),
-        ops.ExtractEpochSeconds: _extract_field('epochseconds'),
         ops.Hash: _hash,
         ops.StringReplace: fixed_arity('REPLACE', 3),
         ops.StringSplit: fixed_arity('SPLIT', 2),
@@ -426,6 +456,25 @@ _operation_registry.update(
         ops.TimestampNow: fixed_arity('CURRENT_TIMESTAMP', 0),
     }
 )
+
+
+def _try_register_op(op_name: str, value):
+    """Register operation if it exists in Ibis.
+
+    This allows us to decouple slightly from ibis-framework releases.
+    """
+    if hasattr(ops, op_name):
+        _operation_registry[getattr(ops, op_name)] = value
+
+
+# 2.x
+_try_register_op('BitAnd', reduction('BIT_AND'))
+_try_register_op('BitOr', reduction('BIT_OR'))
+_try_register_op('BitXor', reduction('BIT_XOR'))
+# 1.4
+_try_register_op('ExtractQuarter', _extract_field('quarter'))
+_try_register_op('ExtractEpochSeconds', _extract_field('epochseconds'))
+
 
 _invalid_operations = {
     ops.Translate,

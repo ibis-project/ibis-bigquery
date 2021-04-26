@@ -6,7 +6,12 @@ from typing import Optional, Tuple
 
 import google.cloud.bigquery as bq
 import ibis
-import ibis.common.exceptions as com
+
+try:
+    import ibis.common.exceptions as com
+except ImportError:
+    import ibis.common as com
+
 import ibis.expr.datatypes as dt
 import ibis.expr.lineage as lin
 import ibis.expr.operations as ops

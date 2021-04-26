@@ -1,8 +1,12 @@
 import ibis
 import ibis.expr.datatypes as dt
+import packaging.version
 import pytest
 
 pytestmark = pytest.mark.bigquery
+
+IBIS_VERSION = packaging.version.Version(ibis.__version__)
+IBIS_1_VERSION = packaging.version.Version("1.4.0")
 
 
 def test_timestamp_accepts_date_literals(alltypes, project_id):
@@ -106,6 +110,8 @@ FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
 
 
 def test_range_window_function(alltypes, project_id):
+    if IBIS_VERSION <= IBIS_1_VERSION:
+        pytest.skip("requires ibis 2.x")
     t = alltypes
     w = ibis.range_window(
         preceding=1, following=0, group_by='year', order_by='month'
@@ -145,6 +151,8 @@ FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
     ],
 )
 def test_trailing_range_window(alltypes, preceding, value, project_id):
+    if IBIS_VERSION <= IBIS_1_VERSION:
+        pytest.skip("requires ibis 2.x")
     t = alltypes
     w = ibis.trailing_range_window(
         preceding=preceding, order_by=t.timestamp_col
@@ -162,6 +170,8 @@ FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
     ('preceding', 'value'), [(ibis.interval(years=1), None)]
 )
 def test_trailing_range_window_unsupported(alltypes, preceding, value):
+    if IBIS_VERSION <= IBIS_1_VERSION:
+        pytest.skip("requires ibis 2.x")
     t = alltypes
     w = ibis.trailing_range_window(
         preceding=preceding, order_by=t.timestamp_col
@@ -283,6 +293,8 @@ FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
 
 
 def test_bit_and(alltypes, project_id):
+    if IBIS_VERSION <= IBIS_1_VERSION:
+        pytest.skip("requires ibis 2.x")
     i = alltypes.int_col
     expr = i.bit_and()
     result = expr.compile()
@@ -301,6 +313,8 @@ FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
 
 
 def test_bit_or(alltypes, project_id):
+    if IBIS_VERSION <= IBIS_1_VERSION:
+        pytest.skip("requires ibis 2.x")
     i = alltypes.int_col
     expr = i.bit_or()
     result = expr.compile()
@@ -319,6 +333,8 @@ FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
 
 
 def test_bit_xor(alltypes, project_id):
+    if IBIS_VERSION <= IBIS_1_VERSION:
+        pytest.skip("requires ibis 2.x")
     i = alltypes.int_col
     expr = i.bit_xor()
     result = expr.compile()

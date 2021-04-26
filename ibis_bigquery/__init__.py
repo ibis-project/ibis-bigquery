@@ -5,13 +5,17 @@ from typing import Optional
 import google.auth.credentials
 import google.cloud.bigquery  # noqa: F401, fail early if bigquery is missing
 import pydata_google_auth
-from ibis.backends.base import BaseBackend
 from pydata_google_auth import cache
 
 from . import version as ibis_bigquery_version
 from .client import (BigQueryClient, BigQueryDatabase, BigQueryQuery,
                      BigQueryTable)
 from .compiler import BigQueryExprTranslator, BigQueryQueryBuilder
+
+try:
+    from ibis.backends.base import BaseBackend
+except ImportError:
+    from .backcompat import BaseBackend
 
 try:
     from .udf import udf  # noqa F401
@@ -41,6 +45,13 @@ class Backend(BaseBackend):
     query_class = BigQueryQuery
     database_class = BigQueryDatabase
     table_class = BigQueryTable
+
+    # These were moved from TestConf for use in common test suite.
+    # TODO: Indicate RoundAwayFromZero and UnorderedComparator.
+    # https://github.com/ibis-project/ibis-bigquery/issues/30
+    supports_divide_by_zero = True
+    supports_floating_modulus = False
+    returned_timestamp_unit = 'us'
 
     def connect(
         self,

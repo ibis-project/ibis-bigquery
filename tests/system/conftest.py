@@ -1,12 +1,8 @@
 import os
-from pathlib import Path
 
-import ibis
-import ibis.expr.types as ir
+import ibis  # noqa: F401
 import pytest
 from google.oauth2 import service_account
-from ibis.backends.tests.base import (BackendTest, RoundAwayFromZero,
-                                      UnorderedComparator)
 
 import ibis_bigquery
 
@@ -40,38 +36,6 @@ def _credentials():
     return service_account.Credentials.from_service_account_file(
         google_application_credentials
     )
-
-
-class TestConf(UnorderedComparator, BackendTest, RoundAwayFromZero):
-    supports_divide_by_zero = True
-    supports_floating_modulus = False
-    returned_timestamp_unit = 'us'
-
-    @staticmethod
-    def connect(data_directory: Path) -> ibis.client.Client:
-        project_id = os.environ.get('GOOGLE_BIGQUERY_PROJECT_ID')
-        if project_id is None:
-            pytest.skip(
-                'Environment variable GOOGLE_BIGQUERY_PROJECT_ID '
-                'not defined'
-            )
-        elif not project_id:
-            pytest.skip(
-                'Environment variable GOOGLE_BIGQUERY_PROJECT_ID is empty'
-            )
-        return bq.connect(
-            project_id=project_id,
-            dataset_id=DATASET_ID,
-            credentials=_credentials(),
-        )
-
-    @property
-    def batting(self) -> ir.TableExpr:
-        return None
-
-    @property
-    def awards_players(self) -> ir.TableExpr:
-        return None
 
 
 @pytest.fixture(scope='session')
