@@ -1,9 +1,15 @@
 """Ibis BigQuery backend."""
 
 import pathlib
+import site
+import sys
 from typing import Dict
 
 import setuptools
+
+
+# See https://github.com/pypa/pip/issues/7953
+site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
 
 # Package metadata.
 
