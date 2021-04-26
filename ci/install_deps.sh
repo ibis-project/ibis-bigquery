@@ -7,7 +7,7 @@ set -x
 echo "import site
 import sys
 site.ENABLE_USER_SITE = '--user' in sys.argv[1:]
-" >> ./ibis/setup.py
+$(cat ./ibis/setup.py)" > ./ibis/setup.py
 
 python -m pip install --upgrade pip
 python -m pip install --user -e ./ibis
