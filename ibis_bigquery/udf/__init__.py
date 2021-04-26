@@ -6,7 +6,14 @@ from typing import Dict, Iterable
 
 import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
-import ibis.udf.validate as v
+
+try:
+    from ibis.udf.validate import validate_output_type
+except ImportError:
+    # 1.2
+    def validate_output_type(*args):
+        pass
+
 from ibis.expr.signature import Argument as Arg
 
 from ..compiler import BigQueryUDFNode, compiles
@@ -163,7 +170,7 @@ def udf(input_type, output_type, strict=True, libraries=None):
     return my_rectangle(width, height);
     """;
     '''
-    v.validate_output_type(output_type)
+    validate_output_type(output_type)
 
     if libraries is None:
         libraries = []

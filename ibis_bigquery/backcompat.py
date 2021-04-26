@@ -9,7 +9,11 @@ TODO: Remove this after Ibis 2.0 release and support for earlier versions of
 
 import abc
 
-from ibis.common.exceptions import TranslationError
+try:
+    from ibis.common.exceptions import TranslationError
+except ImportError:
+    # 1.2
+    from ibis.common import TranslationError
 
 __all__ = ('BaseBackend',)
 
@@ -72,7 +76,10 @@ class BaseBackend(abc.ABC):
 
             dialect_class = AlchemyDialect
         elif self.kind in ('sql', 'pandas'):
-            from ibis.backends.base_sqlalchemy.compiler import Dialect
+            try:
+                from ibis.backends.base_sqlalchemy.compiler import Dialect
+            except ImportError:
+                from ibis.sql.compiler import Dialect
 
             dialect_class = Dialect
         elif self.kind == 'spark':
