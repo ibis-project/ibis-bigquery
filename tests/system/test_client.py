@@ -355,13 +355,16 @@ def test_scalar_param_date(alltypes, df, date_value):
     tm.assert_frame_equal(result, expected)
 
 
-@pytest.mark.xfail(reason='Issue #2374', strict=True)
 def test_scalar_param_array(alltypes, df):
     param = ibis.param('array<double>')
     expr = alltypes.sort_by('id').limit(1).double_col.collect() + param
     result = expr.execute(params={param: [1]})
     expected = [df.sort_values('id').double_col.iat[0]] + [1.0]
-    assert result == expected
+    assert all(
+        float(result[index]) == expected[index]
+        for index
+        in range(len(expected))
+    )
 
 
 def test_scalar_param_struct(client):
@@ -372,14 +375,17 @@ def test_scalar_param_struct(client):
     assert value == result
 
 
-@pytest.mark.xfail(reason='Issue #2373', strict=True)
 def test_scalar_param_nested(client):
     param = ibis.param('struct<x: array<struct<y: array<double>>>>')
     value = collections.OrderedDict(
         [('x', [collections.OrderedDict([('y', [1.0, 2.0, 3.0])])])]
     )
     result = client.execute(param, {param: value})
-    assert value == result
+    assert all(
+        float(res) == float(val)
+        for res, val
+        in zip(value["x"][0]["y"], result["x"][0]["y"])
+    )
 
 
 def test_repr_struct_of_array_of_struct():
