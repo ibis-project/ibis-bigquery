@@ -67,9 +67,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: install dependencies (ibis ${{ matrix.ibis-version }})
+    - name: install dependencies (ibis ${{ matrix.ibis_version }})
       env:
-        IBIS_VERSION: ${{ matrix.ibis-version }}
+        IBIS_VERSION: ${{ matrix.ibis_version }}
       run: ./ci/install_deps.sh
 
     - name: run tests

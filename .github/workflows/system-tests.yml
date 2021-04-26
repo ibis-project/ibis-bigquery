@@ -32,9 +32,9 @@ jobs:
         repository: ibis-project/ibis
         path: ibis
 
-    - name: install dependencies (ibis ${{ matrix.ibis-version }})
+    - name: install dependencies (ibis ${{ matrix.ibis_version }})
       env:
-        IBIS_VERSION: ${{ matrix.ibis-version }}
+        IBIS_VERSION: ${{ matrix.ibis_version }}
       run: ./ci/install_deps.sh
 
     - name: set up bigquery credentials
