@@ -10,7 +10,6 @@ from ibis.expr.types import TableExpr
 
 import ibis_bigquery
 
-
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 
