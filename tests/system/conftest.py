@@ -1,5 +1,6 @@
 import os
 
+import ibis  # noqa: F401
 import pytest
 from google.oauth2 import service_account
 
