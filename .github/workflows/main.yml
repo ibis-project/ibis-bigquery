@@ -50,6 +50,7 @@ jobs:
       fail-fast: false
       matrix:
         python_version: ["3.7", "3.8", "3.9"]
+        ibis_version: ["1.2.0", "1.3.0", "1.4.0", "github"]
     steps:
 
     - name: checkout
@@ -66,7 +67,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: install dependencies
+    - name: install dependencies (ibis ${{ matrix.ibis-version }})
+      env:
+        IBIS_VERSION: ${{ matrix.ibis-version }}
       run: ./ci/install_deps.sh
 
     - name: run tests
