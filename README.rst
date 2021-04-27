@@ -33,7 +33,7 @@ Usage
 Connecting to BigQuery
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Recommended usage:
+Recommended usage (Ibis 2.x, only [not yet released]):
 
 .. code-block:: python
 
