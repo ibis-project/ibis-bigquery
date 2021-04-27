@@ -6,6 +6,7 @@ import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.types as ir
 import numpy as np
+import packaging
 import pandas as pd
 import pandas.testing as tm
 import pytest
@@ -15,7 +16,8 @@ from google.api_core import exceptions
 import ibis_bigquery
 from ibis_bigquery.client import bigquery_param
 
-pytestmark = pytest.mark.bigquery
+IBIS_VERSION = packaging.version.Version(ibis.__version__)
+IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 
 
 def test_table(alltypes):
@@ -236,6 +238,8 @@ FROM (
 
 
 def test_scalar_param_string(alltypes, df):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     param = ibis.param('string')
     expr = alltypes[alltypes.string_col == param]
 
@@ -254,6 +258,8 @@ def test_scalar_param_string(alltypes, df):
 
 
 def test_scalar_param_int64(alltypes, df):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     param = ibis.param('int64')
     expr = alltypes[alltypes.string_col.cast('int64') == param]
 
@@ -272,6 +278,8 @@ def test_scalar_param_int64(alltypes, df):
 
 
 def test_scalar_param_double(alltypes, df):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     param = ibis.param('double')
     expr = alltypes[alltypes.string_col.cast('int64').cast('double') == param]
 
@@ -290,6 +298,8 @@ def test_scalar_param_double(alltypes, df):
 
 
 def test_scalar_param_boolean(alltypes, df):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     param = ibis.param('boolean')
     expr = alltypes[(alltypes.string_col.cast('int64') == 0) == param]
 
@@ -316,6 +326,8 @@ def test_scalar_param_boolean(alltypes, df):
     ],
 )
 def test_scalar_param_timestamp(alltypes, df, timestamp_value):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     param = ibis.param('timestamp')
     expr = alltypes[alltypes.timestamp_col <= param][['timestamp_col']]
 
@@ -338,6 +350,8 @@ def test_scalar_param_timestamp(alltypes, df, timestamp_value):
     ['2009-01-20', datetime.date(2009, 1, 20), datetime.datetime(2009, 1, 20)],
 )
 def test_scalar_param_date(alltypes, df, date_value):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     param = ibis.param('date')
     expr = alltypes[alltypes.timestamp_col.cast('date') <= param]
 
@@ -356,6 +370,8 @@ def test_scalar_param_date(alltypes, df, date_value):
 
 
 def test_scalar_param_array(alltypes, df):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     param = ibis.param('array<double>')
     expr = alltypes.sort_by('id').limit(1).double_col.collect() + param
     result = expr.execute(params={param: [1]})
@@ -368,6 +384,8 @@ def test_scalar_param_array(alltypes, df):
 
 
 def test_scalar_param_struct(client):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     struct_type = dt.Struct.from_tuples([('x', dt.int64), ('y', dt.string)])
     param = ibis.param(struct_type)
     value = collections.OrderedDict([('x', 1), ('y', 'foobar')])
@@ -376,6 +394,8 @@ def test_scalar_param_struct(client):
 
 
 def test_scalar_param_nested(client):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     param = ibis.param('struct<x: array<struct<y: array<double>>>>')
     value = collections.OrderedDict(
         [('x', [collections.OrderedDict([('y', [1.0, 2.0, 3.0])])])]
@@ -467,6 +487,8 @@ def test_parted_column_rename(parted_alltypes):
 
 
 def test_scalar_param_partition_time(parted_alltypes):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     assert 'PARTITIONTIME' in parted_alltypes.columns
     assert 'PARTITIONTIME' in parted_alltypes.schema()
     param = ibis.param('timestamp').name('time_param')

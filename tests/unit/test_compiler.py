@@ -3,11 +3,15 @@ import datetime
 import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
+import packaging.version
 import pandas as pd
 import pytest
 from ibis.expr.types import TableExpr
 
 import ibis_bigquery
+
+IBIS_VERSION = packaging.version.Version(ibis.__version__)
+IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 
 
 @pytest.mark.parametrize(
@@ -103,6 +107,8 @@ def test_day_of_week(case, expected, dtype, strftime_func):
     ],
 )
 def test_hash(case, expected, dtype):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     string_var = ibis.literal(case, type=dtype)
     expr = string_var.hash(how="farm_fingerprint")
     result = ibis_bigquery.compile(expr)
@@ -123,6 +129,8 @@ def test_hash(case, expected, dtype):
     ],
 )
 def test_hashbytes(case, expected, how, dtype):
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     var = ibis.literal(case, type=dtype)
     expr = var.hashbytes(how=how)
     result = ibis_bigquery.compile(expr)
@@ -158,6 +166,8 @@ def test_literal_timestamp_or_time(case, expected, dtype):
 
 
 def test_projection_fusion_only_peeks_at_immediate_parent():
+    if IBIS_VERSION < IBIS_1_4_VERSION:
+        pytest.skip("requires ibis 1.4+")
     schema = [
         ('file_date', 'timestamp'),
         ('PARTITIONTIME', 'date'),
