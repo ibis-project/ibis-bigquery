@@ -16,7 +16,6 @@ from google.api_core import exceptions
 import ibis_bigquery
 from ibis_bigquery.client import bigquery_param
 
-
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 
