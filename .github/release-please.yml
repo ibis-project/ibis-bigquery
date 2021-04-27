@@ -1,0 +1,3 @@
+primaryBranch: main
+releaseLabels: run-ci
+handleGHRelease: true

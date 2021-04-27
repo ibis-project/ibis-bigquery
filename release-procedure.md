@@ -1,6 +1,12 @@
 
-*   Update version string in `ibis_bigquery/version.py`. TODO: add release date
-    to CHANGELOG, too.
+*   Review and merge PR from `release-please`. Check that it:
+    * Updates version string in `ibis_bigquery/version.py`.
+    * Includes all expected changes in `CHANGELOG.md`.
+
+*   Checkout the code.
+
+        git fetch upstream --tags
+        git checkout vA.B.C
 
 *   Build the package
 
@@ -24,11 +30,11 @@
         twine upload dist/*
 
 
-*   Create the [release on
-    GitHub](https://github.com/ibis-project/ibis-bigquery/releases/new) using
+*   Find the [release on
+    GitHub](https://github.com/ibis-project/ibis-bigquery/releases) using
     the tag created earlier.
 
-    *   TODO: copy release notes.
+    *   Verify the release notes.
     *   Upload wheel and source zip from `dist/` directory.
 
 *   Do a pull-request to the feedstock on
