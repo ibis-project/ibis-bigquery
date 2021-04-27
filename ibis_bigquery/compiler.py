@@ -274,6 +274,16 @@ def _string_right(translator, expr):
     )
 
 
+def _string_substring(translator, expr):
+    op = expr.op()
+    arg, start, length = op.args
+    if length.op().value < 0:
+        raise ValueError('Length parameter should not be a negative value.')
+
+    base_substring = operation_registry[ops.Substring]
+    base_substring(translator, expr)
+
+
 def _array_literal_format(expr):
     return str(list(expr.op().value))
 
@@ -418,6 +428,7 @@ _operation_registry.update(
         ops.StringJoin: _string_join,
         ops.StringAscii: _string_ascii,
         ops.StringFind: _string_find,
+        ops.Substring: _string_substring,
         ops.StrRight: _string_right,
         ops.Repeat: fixed_arity('REPEAT', 2),
         ops.RegexSearch: _regex_search,

@@ -268,6 +268,16 @@ FROM t"""
     assert result == expected
 
 
+def test_substring():
+    t = ibis.table([('value', 'string')], name='t')
+    expr = t["value"].substr(3, -1)
+    with pytest.raises(Exception) as exception_info:
+        ibis_bigquery.compile(expr)
+
+    expected = 'Length parameter should not be a negative value.'
+    assert str(exception_info.value) == expected
+
+
 def test_bucket():
     t = ibis.table([('value', 'double')], name='t')
     buckets = [0, 1, 3]
