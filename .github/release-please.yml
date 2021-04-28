@@ -1,5 +1,3 @@
 primaryBranch: main
-releaseLabels:
-- "run-ci"
 releaseType: python
 handleGHRelease: true
