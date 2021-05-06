@@ -17,11 +17,6 @@ bq_backend = ibis_bigquery.Backend()
 
 
 @pytest.fixture(scope='module')
-def client():
-    return bq_backend.connect(PROJECT_ID, DATASET_ID)
-
-
-@pytest.fixture(scope='module')
 def alltypes(client):
     t = client.table('functional_alltypes')
     expr = t[t.bigint_col.isin([10, 20])].limit(10)
