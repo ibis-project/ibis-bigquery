@@ -6,7 +6,7 @@ import ibis
 import ibis.expr.datatypes as dt
 import ibis.expr.types as ir
 import numpy as np
-import packaging
+import packaging.version
 import pandas as pd
 import pandas.testing as tm
 import pytest
