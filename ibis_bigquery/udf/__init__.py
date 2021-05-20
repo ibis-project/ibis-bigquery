@@ -14,17 +14,16 @@ except ImportError:
     def validate_output_type(*args):
         pass
 
+
 from ibis.expr.signature import Argument as Arg
 
-from ..compiler import BigQueryUDFNode, compiles
+from ..compiler import BigQueryUDFNode
 from ..datatypes import UDFContext, ibis_type_to_bigquery_type
 from ..udf.core import PythonToJavaScriptTranslator
 
-__all__ = ('udf',)
+__all__ = ("udf",)
 
-_udf_name_cache: Dict[str, Iterable[int]] = (
-    collections.defaultdict(itertools.count)
-)
+_udf_name_cache: Dict[str, Iterable[int]] = collections.defaultdict(itertools.count)
 
 
 def create_udf_node(name, fields):
@@ -43,7 +42,7 @@ def create_udf_node(name, fields):
         A new BigQueryUDFNode subclass
     """
     definition = next(_udf_name_cache[name])
-    external_name = '{}_{:d}'.format(name, definition)
+    external_name = "{}_{:d}".format(name, definition)
     return type(external_name, (BigQueryUDFNode,), fields)
 
 
@@ -177,7 +176,7 @@ def udf(input_type, output_type, strict=True, libraries=None):
 
     def wrapper(f):
         if not callable(f):
-            raise TypeError('f must be callable, got {}'.format(f))
+            raise TypeError("f must be callable, got {}".format(f))
 
         signature = inspect.signature(f)
         parameter_names = signature.parameters.keys()
@@ -189,29 +188,33 @@ def udf(input_type, output_type, strict=True, libraries=None):
             ]
             + [
                 (
-                    'output_type',
+                    "output_type",
                     lambda self, output_type=output_type: rlz.shape_like(
                         self.args, dtype=output_type
                     ),
                 ),
-                ('__slots__', ('js',)),
+                ("__slots__", ("js",)),
             ]
         )
 
         udf_node = create_udf_node(f.__name__, udf_node_fields)
 
-        @compiles(udf_node)
+        # @compiles(udf_node)
+        from ..compiler import BigQueryExprTranslator
+
         def compiles_udf_node(t, expr):
-            return '{}({})'.format(
-                udf_node.__name__, ', '.join(map(t.translate, expr.op().args))
+            return "{}({})".format(
+                udf_node.__name__, ", ".join(map(t.translate, expr.op().args))
             )
+
+        BigQueryExprTranslator._registry[udf_node] = compiles_udf_node
 
         type_translation_context = UDFContext()
         return_type = ibis_type_to_bigquery_type(
             dt.dtype(output_type), type_translation_context
         )
-        bigquery_signature = ', '.join(
-            '{name} {type}'.format(
+        bigquery_signature = ", ".join(
+            "{name} {type}".format(
                 name=name,
                 type=ibis_type_to_bigquery_type(
                     dt.dtype(type), type_translation_context
@@ -232,12 +235,12 @@ return {internal_name}({args});
             return_type=return_type,
             source=source,
             signature=bigquery_signature,
-            strict=repr('use strict') + ';\n' if strict else '',
-            args=', '.join(parameter_names),
+            strict=repr("use strict") + ";\n" if strict else "",
+            args=", ".join(parameter_names),
             libraries=(
-                '\nOPTIONS (\n    library={}\n)'.format(repr(list(libraries)))
+                "\nOPTIONS (\n    library={}\n)".format(repr(list(libraries)))
                 if libraries
-                else ''
+                else ""
             ),
         )
 

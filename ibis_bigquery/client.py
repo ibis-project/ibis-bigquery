@@ -28,32 +28,32 @@ from pkg_resources import parse_version
 from . import compiler as comp
 from .datatypes import ibis_type_to_bigquery_type
 
-NATIVE_PARTITION_COL = '_PARTITIONTIME'
+NATIVE_PARTITION_COL = "_PARTITIONTIME"
 
 
 _DTYPE_TO_IBIS_TYPE = {
-    'INT64': dt.int64,
-    'FLOAT64': dt.double,
-    'BOOL': dt.boolean,
-    'STRING': dt.string,
-    'DATE': dt.date,
+    "INT64": dt.int64,
+    "FLOAT64": dt.double,
+    "BOOL": dt.boolean,
+    "STRING": dt.string,
+    "DATE": dt.date,
     # FIXME: enforce no tz info
-    'DATETIME': dt.timestamp,
-    'TIME': dt.time,
-    'TIMESTAMP': dt.timestamp,
-    'BYTES': dt.binary,
-    'NUMERIC': dt.Decimal(38, 9),
+    "DATETIME": dt.timestamp,
+    "TIME": dt.time,
+    "TIMESTAMP": dt.timestamp,
+    "BYTES": dt.binary,
+    "NUMERIC": dt.Decimal(38, 9),
 }
 
 
 _LEGACY_TO_STANDARD = {
-    'INTEGER': 'INT64',
-    'FLOAT': 'FLOAT64',
-    'BOOLEAN': 'BOOL',
+    "INTEGER": "INT64",
+    "FLOAT": "FLOAT64",
+    "BOOLEAN": "BOOL",
 }
 
 
-_USER_AGENT_DEFAULT_TEMPLATE = 'ibis/{}'
+_USER_AGENT_DEFAULT_TEMPLATE = "ibis/{}"
 
 
 def _create_client_info(application_name):
@@ -70,16 +70,16 @@ def _create_client_info(application_name):
 def bigquery_field_to_ibis_dtype(field):
     """Convert BigQuery `field` to an ibis type."""
     typ = field.field_type
-    if typ == 'RECORD':
+    if typ == "RECORD":
         fields = field.fields
-        assert fields, 'RECORD fields are empty'
+        assert fields, "RECORD fields are empty"
         names = [el.name for el in fields]
         ibis_types = list(map(dt.dtype, fields))
         ibis_type = dt.Struct(names, ibis_types)
     else:
         ibis_type = _LEGACY_TO_STANDARD.get(typ, typ)
         ibis_type = _DTYPE_TO_IBIS_TYPE.get(ibis_type, ibis_type)
-    if field.mode == 'REPEATED':
+    if field.mode == "REPEATED":
         ibis_type = dt.Array(ibis_type)
     return ibis_type
 
@@ -88,11 +88,11 @@ def bigquery_field_to_ibis_dtype(field):
 def bigquery_schema(table):
     """Infer the schema of a BigQuery `table` object."""
     fields = OrderedDict((el.name, dt.dtype(el)) for el in table.schema)
-    partition_info = table._properties.get('timePartitioning', None)
+    partition_info = table._properties.get("timePartitioning", None)
 
     # We have a partitioned table
     if partition_info is not None:
-        partition_field = partition_info.get('field', NATIVE_PARTITION_COL)
+        partition_field = partition_info.get("field", NATIVE_PARTITION_COL)
 
         # Only add a new column if it's not already a column in the schema
         fields.setdefault(partition_field, dt.timestamp)
@@ -176,13 +176,9 @@ class BigQueryQuery(Query):
         super().__init__(client, ddl)
 
         # self.expr comes from the parent class
-        query_parameter_names = dict(
-            lin.traverse(_find_scalar_parameter, self.expr)
-        )
+        query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
         self.query_parameters = [
-            bigquery_param(
-                param.to_expr().name(query_parameter_names[param]), value
-            )
+            bigquery_param(param.to_expr().name(query_parameter_names[param]), value)
             for param, value in (query_parameters or {}).items()
         ]
 
@@ -207,7 +203,7 @@ class BigQueryDatabase(Database):
     """A BigQuery dataset."""
 
 
-bigquery_param = Dispatcher('bigquery_param')
+bigquery_param = Dispatcher("bigquery_param")
 
 
 @bigquery_param.register(ir.StructScalar, OrderedDict)
@@ -229,51 +225,45 @@ def bq_param_array(param, value):
     else:
         if isinstance(param_type.value_type, dt.Struct):
             query_value = [
-                bigquery_param(param[i].name('element_{:d}'.format(i)), struct)
+                bigquery_param(param[i].name("element_{:d}".format(i)), struct)
                 for i, struct in enumerate(value)
             ]
-            bigquery_type = 'STRUCT'
+            bigquery_type = "STRUCT"
         elif isinstance(param_type.value_type, dt.Array):
-            raise TypeError('ARRAY<ARRAY<T>> is not supported in BigQuery')
+            raise TypeError("ARRAY<ARRAY<T>> is not supported in BigQuery")
         else:
             query_value = value
-        result = bq.ArrayQueryParameter(
-            param.get_name(), bigquery_type, query_value
-        )
+        result = bq.ArrayQueryParameter(param.get_name(), bigquery_type, query_value)
         return result
 
 
-@bigquery_param.register(
-    ir.TimestampScalar, (str, datetime.datetime, datetime.date)
-)
+@bigquery_param.register(ir.TimestampScalar, (str, datetime.datetime, datetime.date))
 def bq_param_timestamp(param, value):
     assert isinstance(param.type(), dt.Timestamp), str(param.type())
 
     # TODO(phillipc): Not sure if this is the correct way to do this.
-    timestamp_value = pd.Timestamp(value, tz='UTC').to_pydatetime()
-    return bq.ScalarQueryParameter(
-        param.get_name(), 'TIMESTAMP', timestamp_value
-    )
+    timestamp_value = pd.Timestamp(value, tz="UTC").to_pydatetime()
+    return bq.ScalarQueryParameter(param.get_name(), "TIMESTAMP", timestamp_value)
 
 
 @bigquery_param.register(ir.StringScalar, str)
 def bq_param_string(param, value):
-    return bq.ScalarQueryParameter(param.get_name(), 'STRING', value)
+    return bq.ScalarQueryParameter(param.get_name(), "STRING", value)
 
 
 @bigquery_param.register(ir.IntegerScalar, int)
 def bq_param_integer(param, value):
-    return bq.ScalarQueryParameter(param.get_name(), 'INT64', value)
+    return bq.ScalarQueryParameter(param.get_name(), "INT64", value)
 
 
 @bigquery_param.register(ir.FloatingScalar, float)
 def bq_param_double(param, value):
-    return bq.ScalarQueryParameter(param.get_name(), 'FLOAT64', value)
+    return bq.ScalarQueryParameter(param.get_name(), "FLOAT64", value)
 
 
 @bigquery_param.register(ir.BooleanScalar, bool)
 def bq_param_boolean(param, value):
-    return bq.ScalarQueryParameter(param.get_name(), 'BOOL', value)
+    return bq.ScalarQueryParameter(param.get_name(), "BOOL", value)
 
 
 @bigquery_param.register(ir.DateScalar, str)
@@ -288,7 +278,7 @@ def bq_param_date_datetime(param, value):
 
 @bigquery_param.register(ir.DateScalar, datetime.date)
 def bq_param_date(param, value):
-    return bq.ScalarQueryParameter(param.get_name(), 'DATE', value)
+    return bq.ScalarQueryParameter(param.get_name(), "DATE", value)
 
 
 class BigQueryTable(ops.DatabaseTable):
@@ -297,7 +287,7 @@ class BigQueryTable(ops.DatabaseTable):
 
 def rename_partitioned_column(table_expr, bq_table, partition_col):
     """Rename native partition column to user-defined name."""
-    partition_info = bq_table._properties.get('timePartitioning', None)
+    partition_info = bq_table._properties.get("timePartitioning", None)
 
     # If we don't have any partiton information, the table isn't partitioned
     if partition_info is None:
@@ -305,7 +295,7 @@ def rename_partitioned_column(table_expr, bq_table, partition_col):
 
     # If we have a partition, but no "field" field in the table properties,
     # then use NATIVE_PARTITION_COL as the default
-    partition_field = partition_info.get('field', NATIVE_PARTITION_COL)
+    partition_field = partition_info.get("field", NATIVE_PARTITION_COL)
 
     # The partition field must be in table_expr columns
     assert partition_field in table_expr.columns
@@ -421,7 +411,7 @@ class BigQueryClient(SQLClient):
             raise ValueError("Unable to determine BigQuery dataset.")
         project, _, dataset = parse_project_and_dataset(
             self.billing_project,
-            dataset or '{}.{}'.format(self.data_project, self.dataset),
+            dataset or "{}.{}".format(self.data_project, self.dataset),
         )
         return project, dataset
 
@@ -435,7 +425,7 @@ class BigQueryClient(SQLClient):
 
     def table(self, name, database=None):
         t = super().table(name, database=database)
-        project, dataset, name = t.op().name.split('.')
+        project, dataset, name = t.op().name.split(".")
         dataset_ref = self.client.dataset(dataset, project=project)
         table_ref = dataset_ref.table(name)
         bq_table = self.client.get_table(table_ref)
@@ -453,7 +443,7 @@ class BigQueryClient(SQLClient):
         return "{}.{}.{}".format(project, dataset, name)
 
     def _get_table_schema(self, qualified_name):
-        dataset, table = qualified_name.rsplit('.', 1)
+        dataset, table = qualified_name.rsplit(".", 1)
         assert dataset is not None, "dataset is None"
         return self.get_schema(table, database=dataset)
 
@@ -511,9 +501,8 @@ class BigQueryClient(SQLClient):
 
     def list_databases(self, like=None):
         results = [
-            dataset.dataset_id for dataset in self.client.list_datasets(
-                project=self.data_project
-            )
+            dataset.dataset_id
+            for dataset in self.client.list_datasets(project=self.data_project)
         ]
         if like:
             results = [
@@ -538,9 +527,7 @@ class BigQueryClient(SQLClient):
     def list_tables(self, like=None, database=None):
         project, dataset = self._parse_project_and_dataset(database)
         dataset_ref = bq.DatasetReference(project, dataset)
-        result = [
-            table.table_id for table in self.client.list_tables(dataset_ref)
-        ]
+        result = [table.table_id for table in self.client.list_tables(dataset_ref)]
         if like:
             result = [
                 table_name
