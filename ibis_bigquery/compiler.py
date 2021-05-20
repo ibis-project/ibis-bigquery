@@ -9,7 +9,10 @@ import ibis
 try:
     import ibis.backends.base_sqlalchemy.compiler as comp
 except ImportError:
-    import ibis.sql.compiler as comp
+    try:
+        import ibis.sql.compiler as comp
+    except ImportError:
+        import ibis.backends.base.sql.compiler as comp
 try:
     import ibis.common.exceptions as com
 except ImportError:
@@ -24,22 +27,30 @@ import regex as re
 import toolz
 
 try:
-    # 2.x
-    from ibis.backends.base.sql import (fixed_arity, literal,
-                                        operation_registry, reduction, unary)
+    from ibis.backends.base.sql.alchemy.registry import _literal as literal
+    from ibis.backends.base.sql.alchemy.registry import fixed_arity, reduction
+    from ibis.backends.base.sql.alchemy.registry import \
+        sqlalchemy_operation_registry as operation_registry
+    from ibis.backends.base.sql.alchemy.registry import unary
 except ImportError:
     try:
-        # 1.4
-        from ibis.backends.base_sql import (fixed_arity, literal,
+        # 2.x
+        from ibis.backends.base.sql import (fixed_arity, literal,
                                             operation_registry, reduction,
                                             unary)
     except ImportError:
-        # 1.2
-        from ibis.impala.compiler import _literal as literal
-        from ibis.impala.compiler import \
-            _operation_registry as operation_registry
-        from ibis.impala.compiler import _reduction as reduction
-        from ibis.impala.compiler import fixed_arity, unary
+        try:
+            # 1.4
+            from ibis.backends.base_sql import (fixed_arity, literal,
+                                                operation_registry, reduction,
+                                                unary)
+        except ImportError:
+            # 1.2
+            from ibis.impala.compiler import _literal as literal
+            from ibis.impala.compiler import \
+                _operation_registry as operation_registry
+            from ibis.impala.compiler import _reduction as reduction
+            from ibis.impala.compiler import fixed_arity, unary
 
 try:
     from ibis.backends.base_sql.compiler import (BaseExprTranslator,
@@ -517,7 +528,18 @@ class BigQueryExprTranslator(BaseExprTranslator):
         return '@{}'.format(expr.get_name())
 
 
-compiles = BigQueryExprTranslator.compiles
+try:
+    compiles = BigQueryExprTranslator.compiles
+except AttributeError:
+    # https://github.com/ibis-project/ibis/commit/3d5a10
+    def _add_operation(operation):
+        def decorator(translation_func):
+            BigQueryExprTranslator.add_operation(
+                operation, translation_func
+            )
+        return decorator
+    compiles = _add_operation
+
 rewrites = BigQueryExprTranslator.rewrites
 
 
