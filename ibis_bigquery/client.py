@@ -43,6 +43,7 @@ _DTYPE_TO_IBIS_TYPE = {
     'TIMESTAMP': dt.timestamp,
     'BYTES': dt.binary,
     'NUMERIC': dt.Decimal(38, 9),
+    'BIGNUMERIC': dt.Decimal(76, 38),
 }
 
 

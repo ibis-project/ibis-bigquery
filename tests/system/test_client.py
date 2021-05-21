@@ -709,7 +709,9 @@ def test_column_summary(alltypes):
 
 def test_numeric_table_schema(numeric_table):
     assert numeric_table.schema() == ibis.schema(
-        [('string_col', dt.string), ('numeric_col', dt.Decimal(38, 9))]
+        [('string_col', dt.string),
+         ('numeric_col', dt.Decimal(38, 9)),
+         ('bignumeric_col', dt.Decimal(76, 38))]
     )
 
 
@@ -717,6 +719,15 @@ def test_numeric_sum(numeric_table):
     t = numeric_table
     expr = t.numeric_col.sum()
     result = expr.execute()
+    print(result)
+    assert isinstance(result, decimal.Decimal)
+
+
+def test_bignumeric_sum(numeric_table):
+    t = numeric_table
+    expr = t.bignumeric_col.sum()
+    result = expr.execute()
+    print(result)
     assert isinstance(result, decimal.Decimal)
 
 

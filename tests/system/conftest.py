@@ -140,7 +140,7 @@ def testing_dataset(bqclient, request):
         bqclient.delete_dataset(dataset_ref, delete_contents=True)
     bqclient.create_dataset(dataset_ref)
     yield dataset_ref
-    bqclient.delete_dataset(dataset_ref, delete_contents=True)
+    #bqclient.delete_dataset(dataset_ref, delete_contents=True)
 
 
 @pytest.fixture(scope='session')
@@ -313,14 +313,32 @@ def numeric_bq_table(testing_dataset):
     return bigquery.TableReference(testing_dataset, 'numeric_table')
 
 
-@pytest.fixture(autouse=True, scope='session')
+@pytest.fixture(scope='session')
 def create_numeric_table(bqclient, numeric_bq_table):
     table = bigquery.Table(numeric_bq_table)
     table.schema = [
         bigquery.SchemaField('string_col', 'STRING'),
         bigquery.SchemaField('numeric_col', 'NUMERIC'),
+        bigquery.SchemaField('bignumeric_col', 'BIGNUMERIC'),
     ]
     bqclient.create_table(table, exists_ok=True)
+    return table
+
+
+@pytest.fixture(autouse=True, scope='session')
+def load_numeric_data(
+        bqclient, create_numeric_table):
+    table = create_numeric_table
+    load_config = bigquery.LoadJobConfig()
+    load_config.skip_leading_rows = 1  # skip the header row.
+    with open('tests/system/numeric.csv', 'rb') as csvfile:
+        job = bqclient.load_table_from_file(
+            csvfile,
+            table,
+            job_config=load_config,
+        ).result()
+    if job.error_result:
+        print('error')
 
 
 def download_file(url):
