@@ -511,8 +511,6 @@ class BigQueryExprTranslator(BaseExprTranslator):
         return "@{}".format(expr.get_name())
 
 
-# AlchemyExprTranslator._registry[ops.Divide] = _true_divide
-# compiles = BigQueryExprTranslator.compiles
 rewrites = BigQueryExprTranslator.rewrites
 
 
