@@ -1,13 +1,14 @@
+import io
 import os
+import shutil
+import tempfile
+import urllib.request
 
 import ibis  # noqa: F401
 import pytest
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 from google.oauth2 import service_account
-import shutil
-import tempfile
-import urllib.request
 
 import ibis_bigquery
 
@@ -20,8 +21,8 @@ bq = ibis_bigquery.Backend()
 
 
 def pytest_addoption(parser):
-    parser.addoption('--overwrite', action='store_true',
-                     help='overwrite testing dataset if exist')
+    parser.addoption('--save-dataset', action='store_true', default=False,
+                     help='saves all test data in the testing dataset')
 
 
 def _credentials():
@@ -125,22 +126,13 @@ def bqclient(client):
 @pytest.fixture(scope='session')
 def testing_dataset(bqclient, request):
     dataset_ref = bigquery.DatasetReference(bqclient.project, DATASET_ID)
-    overwrite = request.config.getoption("--overwrite")
-    delete_dataset = False
     try:
-        bqclient.get_dataset(dataset_ref)
-        if overwrite:
-            delete_dataset = True
-        else:
-            pytest.exit(
-                'Testing dataset exists, use --overwrite option to replace.')
+        bqclient.create_dataset(dataset_ref, exists_ok=True)
     except NotFound:
         pass
-    if delete_dataset:
-        bqclient.delete_dataset(dataset_ref, delete_contents=True)
-    bqclient.create_dataset(dataset_ref)
     yield dataset_ref
-    #bqclient.delete_dataset(dataset_ref, delete_contents=True)
+    if not request.config.getoption("--save-dataset"):
+        bqclient.delete_dataset(dataset_ref, delete_contents=True)
 
 
 @pytest.fixture(scope='session')
@@ -177,6 +169,7 @@ def load_functional_alltypes_data(bqclient, create_functional_alltypes_table):
     table = create_functional_alltypes_table
     load_config = bigquery.LoadJobConfig()
     load_config.skip_leading_rows = 1  # skip the header row.
+    load_config.write_disposition = 'WRITE_TRUNCATE'
     filepath = download_file(
         '{}/functional_alltypes.csv'.format(TESTING_DATA_URI))
     with open(filepath.name, 'rb') as csvfile:
@@ -230,6 +223,7 @@ def load_functional_alltypes_parted_data(
         bqclient, create_functional_alltypes_parted_table):
     table = create_functional_alltypes_parted_table
     load_config = bigquery.LoadJobConfig()
+    load_config.write_disposition = 'WRITE_TRUNCATE'
     load_config.skip_leading_rows = 1  # skip the header row.
     filepath = download_file(
         '{}/functional_alltypes.csv'.format(TESTING_DATA_URI))
@@ -319,24 +313,32 @@ def create_numeric_table(bqclient, numeric_bq_table):
     table.schema = [
         bigquery.SchemaField('string_col', 'STRING'),
         bigquery.SchemaField('numeric_col', 'NUMERIC'),
-        bigquery.SchemaField('bignumeric_col', 'BIGNUMERIC'),
+        bigquery.SchemaField('bignumeric_col', 'BIGNUMERIC')
     ]
     bqclient.create_table(table, exists_ok=True)
     return table
 
 
 @pytest.fixture(autouse=True, scope='session')
-def load_numeric_data(
-        bqclient, create_numeric_table):
-    table = create_numeric_table
+def load_numeric_data(bqclient, create_numeric_table):
     load_config = bigquery.LoadJobConfig()
-    load_config.skip_leading_rows = 1  # skip the header row.
-    with open('tests/system/numeric.csv', 'rb') as csvfile:
-        job = bqclient.load_table_from_file(
-            csvfile,
-            table,
-            job_config=load_config,
-        ).result()
+    load_config.write_disposition = 'WRITE_TRUNCATE'
+    load_config.source_format = 'NEWLINE_DELIMITED_JSON'
+    data = u'''\
+    {\
+    "string_col": "1st value",\
+    "numeric_col": 0.999999999,\
+    "bignumeric_col": 0.99999999999999999999999999999999999999\
+    }\n\
+    {\
+    "string_col": "2nd value",\
+    "numeric_col": 0.000000002,\
+    "bignumeric_col": 0.00000000000000000000000000000000000002\
+    }'''
+    jsonfile = io.StringIO(data)
+    table = create_numeric_table
+    job = bqclient.load_table_from_file(
+        jsonfile, table, job_config=load_config).result()
     if job.error_result:
         print('error')
 
