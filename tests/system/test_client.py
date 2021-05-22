@@ -719,16 +719,20 @@ def test_numeric_sum(numeric_table):
     t = numeric_table
     expr = t.numeric_col.sum()
     result = expr.execute()
-    print(result)
     assert isinstance(result, decimal.Decimal)
+    compare = result.compare(decimal.Decimal(
+        '1.000000001'))
+    assert compare == decimal.Decimal('0')
 
 
 def test_bignumeric_sum(numeric_table):
     t = numeric_table
     expr = t.bignumeric_col.sum()
     result = expr.execute()
-    print(result)
     assert isinstance(result, decimal.Decimal)
+    compare = result.compare(decimal.Decimal(
+        '1.00000000000000000000000000000000000001'))
+    assert compare == decimal.Decimal('0')
 
 
 def test_boolean_casting(alltypes):
