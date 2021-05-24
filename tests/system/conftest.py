@@ -123,7 +123,7 @@ def bqclient(client):
 
 
 # Create testing dataset.
-@pytest.fixture(scope='session')
+@pytest.fixture(autouse=true, scope='session')
 def testing_dataset(bqclient, request):
     dataset_ref = bigquery.DatasetReference(bqclient.project, DATASET_ID)
     try:
