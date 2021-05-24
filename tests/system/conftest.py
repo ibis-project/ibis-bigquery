@@ -132,7 +132,9 @@ def testing_dataset(bqclient, request):
         pass
     yield dataset_ref
     if not request.config.getoption("--save-dataset"):
-        bqclient.delete_dataset(dataset_ref, delete_contents=True)
+        bqclient.delete_dataset(
+            dataset_ref, delete_contents=True, not_found_ok=True
+        )
 
 
 @pytest.fixture(scope='session')
