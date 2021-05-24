@@ -27,11 +27,9 @@ import regex as re
 import toolz
 
 try:
-    from ibis.backends.base.sql.alchemy.registry import _literal as literal
-    from ibis.backends.base.sql.alchemy.registry import fixed_arity, reduction
-    from ibis.backends.base.sql.alchemy.registry import \
-        sqlalchemy_operation_registry as operation_registry
-    from ibis.backends.base.sql.alchemy.registry import unary
+    from ibis.backends.base.sql.registry import (fixed_arity, literal,
+                                                 operation_registry, reduction,
+                                                 unary)
 except ImportError:
     try:
         # 2.x
