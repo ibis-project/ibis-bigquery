@@ -52,6 +52,13 @@ def test_no_ambiguities():
                 raises=TypeError, reason='Not supported in BigQuery'
             ),
         ),
+        param(
+            dt.Decimal(76, 38),
+            'BIGNUMERIC',
+            marks=pytest.mark.xfail(
+                raises=TypeError, reason='Not supported in BigQuery'
+            ),
+        ),
     ],
 )
 def test_simple(datatype, expected):
