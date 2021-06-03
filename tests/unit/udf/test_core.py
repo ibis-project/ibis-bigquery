@@ -9,8 +9,8 @@ from ibis_bigquery.udf.core import PythonToJavaScriptTranslator, SymbolTable
 
 def test_symbol_table():
     symbols = SymbolTable()
-    assert symbols['a'] == 'let a'
-    assert symbols['a'] == 'a'
+    assert symbols["a"] == "let a"
+    assert symbols["a"] == "a"
 
 
 def compile(f):
@@ -60,20 +60,20 @@ function* f(a) {
     assert expected == js
 
 
-@pytest.mark.skipif(sys.platform == 'win32', reason='Skip on Windows')
+@pytest.mark.skipif(sys.platform == "win32", reason="Skip on Windows")
 def test_yield_from():
     d = {}
 
-    with tempfile.NamedTemporaryFile('r+') as f:
+    with tempfile.NamedTemporaryFile("r+") as f:
         f.write(
             """\
 def f(a):
     yield from [1, 2, 3]"""
         )
         f.seek(0)
-        code = builtins.compile(f.read(), f.name, 'exec')
+        code = builtins.compile(f.read(), f.name, "exec")
         exec(code, d)
-        f = d['f']
+        f = d["f"]
         js = compile(f)
     expected = """\
 function* f(a) {
@@ -117,7 +117,7 @@ def div(x, y):
 
 
 @pytest.mark.parametrize(
-    ('op', 'expected'), [(add, '+'), (sub, '-'), (mul, '*'), (div, '/')]
+    ("op", "expected"), [(add, "+"), (sub, "-"), (mul, "*"), (div, "/")]
 )
 def test_binary_operators(op, expected):
     js = compile(op)
@@ -210,7 +210,7 @@ function f() {
 
 def test_str():
     def f():
-        a = 'abc'
+        a = "abc"
         return a
 
     expected = """\
@@ -224,7 +224,7 @@ function f() {
 
 def test_tuple():
     def f():
-        a = 'a', 'b', 'c'
+        a = "a", "b", "c"
         return a
 
     expected = """\
@@ -238,7 +238,7 @@ function f() {
 
 def test_dict():
     def f():
-        a = {'a': 1, 'b': 2}
+        a = {"a": 1, "b": 2}
         return a
 
     expected = """\
@@ -377,7 +377,7 @@ function f(a) {
 def test_setitem():
     def f(a):
         x = {}
-        y = '2'
+        y = "2"
         x[y] = y
         return x
 
@@ -395,7 +395,7 @@ function f(a) {
 def test_delete():
     def f(a):
         x = [a, 1, 2, 3]
-        y = {'a': 1}
+        y = {"a": 1}
         del x[0], x[1]
         del x[0 + 3]
         del y.a
@@ -467,7 +467,7 @@ function f() {
     assert expected == js
 
 
-@pytest.mark.xfail(raises=NotImplementedError, reason='Not yet implemented')
+@pytest.mark.xfail(raises=NotImplementedError, reason="Not yet implemented")
 def test_nested_list_comp():
     # TODO(phillipc): This can be done by nesting map calls followed by
     # N - 1 calls to array.reduce(Array.concat), where N is the number of

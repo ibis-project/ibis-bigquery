@@ -10,8 +10,8 @@ IBIS_1_VERSION = packaging.version.Version("1.4.0")
 
 
 def test_timestamp_accepts_date_literals(alltypes, project_id):
-    date_string = '2009-03-01'
-    param = ibis.param(dt.timestamp).name('param_0')
+    date_string = "2009-03-01"
+    param = ibis.param(dt.timestamp).name("param_0")
     expr = alltypes.mutate(param=param)
     params = {param: date_string}
     result = expr.compile(params=params)
@@ -22,7 +22,7 @@ FROM `{project_id}.testing.functional_alltypes`"""
 
 
 @pytest.mark.parametrize(
-    ('distinct', 'expected_keyword'), [(True, 'DISTINCT'), (False, 'ALL')]
+    ("distinct", "expected_keyword"), [(True, "DISTINCT"), (False, "ALL")]
 )
 def test_union(alltypes, distinct, expected_keyword, project_id):
     expr = alltypes.union(alltypes, distinct=distinct)
@@ -47,7 +47,7 @@ FROM `{project_id}.testing.functional_alltypes`"""
 
 def test_identical_to(alltypes, project_id):
     t = alltypes
-    pred = t.string_col.identical_to('a') & t.date_string_col.identical_to('b')
+    pred = t.string_col.identical_to("a") & t.date_string_col.identical_to("b")
     expr = t[pred]
     result = expr.compile()
     expected = f"""\
@@ -58,9 +58,9 @@ WHERE (((`string_col` IS NULL) AND ('a' IS NULL)) OR (`string_col` = 'a')) AND
     assert result == expected
 
 
-@pytest.mark.parametrize('timezone', [None, 'America/New_York'])
+@pytest.mark.parametrize("timezone", [None, "America/New_York"])
 def test_to_timestamp(alltypes, timezone, project_id):
-    expr = alltypes.date_string_col.to_timestamp('%F', timezone)
+    expr = alltypes.date_string_col.to_timestamp("%F", timezone)
     result = expr.compile()
     if timezone:
         expected = f"""\
@@ -76,7 +76,7 @@ FROM `{project_id}.testing.functional_alltypes`"""
 def test_window_function(alltypes, project_id):
     t = alltypes
     w1 = ibis.window(
-        preceding=1, following=0, group_by='year', order_by='timestamp_col'
+        preceding=1, following=0, group_by="year", order_by="timestamp_col"
     )
     expr = t.mutate(win_avg=t.float_col.mean().over(w1))
     result = expr.compile()
@@ -87,7 +87,7 @@ FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
     w2 = ibis.window(
-        preceding=0, following=2, group_by='year', order_by='timestamp_col'
+        preceding=0, following=2, group_by="year", order_by="timestamp_col"
     )
     expr = t.mutate(win_avg=t.float_col.mean().over(w2))
     result = expr.compile()
@@ -97,9 +97,7 @@ SELECT *,
 FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
-    w3 = ibis.window(
-        preceding=(4, 2), group_by='year', order_by='timestamp_col'
-    )
+    w3 = ibis.window(preceding=(4, 2), group_by="year", order_by="timestamp_col")
     expr = t.mutate(win_avg=t.float_col.mean().over(w3))
     result = expr.compile()
     expected = f"""\
@@ -113,9 +111,7 @@ def test_range_window_function(alltypes, project_id):
     if IBIS_VERSION <= IBIS_1_VERSION:
         pytest.skip("requires ibis 2.x")
     t = alltypes
-    w = ibis.range_window(
-        preceding=1, following=0, group_by='year', order_by='month'
-    )
+    w = ibis.range_window(preceding=1, following=0, group_by="year", order_by="month")
     expr = t.mutate(two_month_avg=t.float_col.mean().over(w))
     result = expr.compile()
     expected = f"""\
@@ -124,9 +120,7 @@ SELECT *,
 FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
-    w3 = ibis.range_window(
-        preceding=(4, 2), group_by='year', order_by='timestamp_col'
-    )
+    w3 = ibis.range_window(preceding=(4, 2), group_by="year", order_by="timestamp_col")
     expr = t.mutate(win_avg=t.float_col.mean().over(w3))
     result = expr.compile()
     expected = f"""\
@@ -137,7 +131,7 @@ FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
 
 
 @pytest.mark.parametrize(
-    ('preceding', 'value'),
+    ("preceding", "value"),
     [
         (5, 5),
         (ibis.interval(nanoseconds=1), 0.001),
@@ -154,9 +148,7 @@ def test_trailing_range_window(alltypes, preceding, value, project_id):
     if IBIS_VERSION <= IBIS_1_VERSION:
         pytest.skip("requires ibis 2.x")
     t = alltypes
-    w = ibis.trailing_range_window(
-        preceding=preceding, order_by=t.timestamp_col
-    )
+    w = ibis.trailing_range_window(preceding=preceding, order_by=t.timestamp_col)
     expr = t.mutate(win_avg=t.float_col.mean().over(w))
     result = expr.compile()
     expected = f"""\
@@ -166,40 +158,32 @@ FROM `{project_id}.testing.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
 
-@pytest.mark.parametrize(
-    ('preceding', 'value'), [(ibis.interval(years=1), None)]
-)
+@pytest.mark.parametrize(("preceding", "value"), [(ibis.interval(years=1), None)])
 def test_trailing_range_window_unsupported(alltypes, preceding, value):
     if IBIS_VERSION <= IBIS_1_VERSION:
         pytest.skip("requires ibis 2.x")
     t = alltypes
-    w = ibis.trailing_range_window(
-        preceding=preceding, order_by=t.timestamp_col
-    )
+    w = ibis.trailing_range_window(preceding=preceding, order_by=t.timestamp_col)
     expr = t.mutate(win_avg=t.float_col.mean().over(w))
     with pytest.raises(ValueError):
         expr.compile()
 
 
 @pytest.mark.parametrize(
-    ('distinct1', 'distinct2', 'expected1', 'expected2'),
+    ("distinct1", "distinct2", "expected1", "expected2"),
     [
-        (True, True, 'UNION DISTINCT', 'UNION DISTINCT'),
-        (True, False, 'UNION DISTINCT', 'UNION ALL'),
-        (False, True, 'UNION ALL', 'UNION DISTINCT'),
-        (False, False, 'UNION ALL', 'UNION ALL'),
+        (True, True, "UNION DISTINCT", "UNION DISTINCT"),
+        (True, False, "UNION DISTINCT", "UNION ALL"),
+        (False, True, "UNION ALL", "UNION DISTINCT"),
+        (False, False, "UNION ALL", "UNION ALL"),
     ],
 )
-def test_union_cte(
-    alltypes, distinct1, distinct2, expected1, expected2, project_id
-):
+def test_union_cte(alltypes, distinct1, distinct2, expected1, expected2, project_id):
     t = alltypes
     expr1 = t.group_by(t.string_col).aggregate(metric=t.double_col.sum())
     expr2 = expr1.view()
     expr3 = expr1.view()
-    expr = expr1.union(expr2, distinct=distinct1).union(
-        expr3, distinct=distinct2
-    )
+    expr = expr1.union(expr2, distinct=distinct1).union(expr3, distinct=distinct2)
     result = expr.compile()
     expected = f"""\
 WITH t0 AS (
@@ -361,7 +345,7 @@ SELECT COVAR_SAMP(`double_col`, `double_col`) AS `tmp`
 FROM `{project_id}.testing.functional_alltypes`"""
     assert result == expected
 
-    expr = d.cov(d, how='pop')
+    expr = d.cov(d, how="pop")
     result = expr.compile()
     expected = f"""\
 SELECT COVAR_POP(`double_col`, `double_col`) AS `tmp`
@@ -369,4 +353,4 @@ FROM `{project_id}.testing.functional_alltypes`"""
     assert result == expected
 
     with pytest.raises(ValueError):
-        d.cov(d, how='error')
+        d.cov(d, how="error")
