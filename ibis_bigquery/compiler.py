@@ -125,18 +125,6 @@ class BigQueryExprTranslator(BaseExprTranslator):
         return "@{}".format(expr.get_name())
 
 
-try:
-    compiles = BigQueryExprTranslator.compiles
-except AttributeError:
-    # https://github.com/ibis-project/ibis/commit/3d5a10
-    def _add_operation(operation):
-        def decorator(translation_func):
-            BigQueryExprTranslator.add_operation(operation, translation_func)
-
-        return decorator
-
-    compiles = _add_operation
-
 rewrites = BigQueryExprTranslator.rewrites
 
 
@@ -201,3 +189,7 @@ def bq_mean(expr):
 @rewrites(ops.NotAll)
 def bigquery_any_all_no_op(expr):
     return expr
+
+
+def add_operation(op, translation_func):
+    _operation_registry[op] = translation_func
