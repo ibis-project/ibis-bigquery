@@ -645,6 +645,12 @@ def bq_mean(expr):
         return expr
 
 
+@rewrites(ops.FloorDivide)
+def bq_floor_divide(expr):
+    left, right = expr.op().args
+    return left.div(right).floor()
+
+
 UNIT_FUNCS = {'s': 'SECONDS', 'ms': 'MILLIS', 'us': 'MICROS'}
 
 
