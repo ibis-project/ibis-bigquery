@@ -16,3 +16,5 @@ isort
 pydocstyle
 setuptools-scm
 types-pytz
+types-pkg_resources
+types-setuptools
