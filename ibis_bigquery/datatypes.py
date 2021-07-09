@@ -20,7 +20,7 @@ class UDFContext(TypeTranslationContext):
     __slots__ = ()
 
 
-ibis_type_to_bigquery_type = Dispatcher('ibis_type_to_bigquery_type')
+ibis_type_to_bigquery_type = Dispatcher("ibis_type_to_bigquery_type")
 
 
 @ibis_type_to_bigquery_type.register(str)
@@ -40,42 +40,34 @@ def trans_string_context(datatype, context):
 
 @ibis_type_to_bigquery_type.register(dt.Floating, TypeTranslationContext)
 def trans_float64(t, context):
-    return 'FLOAT64'
+    return "FLOAT64"
 
 
 @ibis_type_to_bigquery_type.register(dt.Integer, TypeTranslationContext)
 def trans_integer(t, context):
-    return 'INT64'
+    return "INT64"
 
 
 @ibis_type_to_bigquery_type.register(dt.Binary, TypeTranslationContext)
 def trans_binary(t, context):
-    return 'BYTES'
+    return "BYTES"
 
 
-@ibis_type_to_bigquery_type.register(
-    dt.UInt64, (TypeTranslationContext, UDFContext)
-)
+@ibis_type_to_bigquery_type.register(dt.UInt64, (TypeTranslationContext, UDFContext))
 def trans_lossy_integer(t, context):
-    raise TypeError(
-        'Conversion from uint64 to BigQuery integer type (int64) is lossy'
-    )
+    raise TypeError("Conversion from uint64 to BigQuery integer type (int64) is lossy")
 
 
 @ibis_type_to_bigquery_type.register(dt.Array, TypeTranslationContext)
 def trans_array(t, context):
-    return 'ARRAY<{}>'.format(
-        ibis_type_to_bigquery_type(t.value_type, context)
-    )
+    return "ARRAY<{}>".format(ibis_type_to_bigquery_type(t.value_type, context))
 
 
 @ibis_type_to_bigquery_type.register(dt.Struct, TypeTranslationContext)
 def trans_struct(t, context):
-    return 'STRUCT<{}>'.format(
-        ', '.join(
-            '{} {}'.format(
-                name, ibis_type_to_bigquery_type(dt.dtype(type), context)
-            )
+    return "STRUCT<{}>".format(
+        ", ".join(
+            "{} {}".format(name, ibis_type_to_bigquery_type(dt.dtype(type), context))
             for name, type in zip(t.names, t.types)
         )
     )
@@ -83,14 +75,14 @@ def trans_struct(t, context):
 
 @ibis_type_to_bigquery_type.register(dt.Date, TypeTranslationContext)
 def trans_date(t, context):
-    return 'DATE'
+    return "DATE"
 
 
 @ibis_type_to_bigquery_type.register(dt.Timestamp, TypeTranslationContext)
 def trans_timestamp(t, context):
     if t.timezone is not None:
-        raise TypeError('BigQuery does not support timestamps with timezones')
-    return 'TIMESTAMP'
+        raise TypeError("BigQuery does not support timestamps with timezones")
+    return "TIMESTAMP"
 
 
 @ibis_type_to_bigquery_type.register(dt.DataType, TypeTranslationContext)
@@ -103,9 +95,9 @@ def trans_integer_udf(t, context):
     # JavaScript does not have integers, only a Number class. BigQuery doesn't
     # behave as expected with INT64 inputs or outputs
     raise TypeError(
-        'BigQuery does not support INT64 as an argument type or a return type '
-        'for UDFs. Replace INT64 with FLOAT64 in your UDF signature and '
-        'cast all INT64 inputs to FLOAT64.'
+        "BigQuery does not support INT64 as an argument type or a return type "
+        "for UDFs. Replace INT64 with FLOAT64 in your UDF signature and "
+        "cast all INT64 inputs to FLOAT64."
     )
 
 
@@ -113,12 +105,12 @@ def trans_integer_udf(t, context):
 def trans_numeric(t, context):
     if (t.precision, t.scale) != (38, 9):
         raise TypeError(
-            'BigQuery only supports decimal types with precision of 38 and '
-            'scale of 9'
+            "BigQuery only supports decimal types with precision of 38 and "
+            "scale of 9"
         )
-    return 'NUMERIC'
+    return "NUMERIC"
 
 
 @ibis_type_to_bigquery_type.register(dt.Decimal, TypeTranslationContext)
 def trans_numeric_udf(t, context):
-    raise TypeError('Decimal types are not supported in BigQuery UDFs')
+    raise TypeError("Decimal types are not supported in BigQuery UDFs")

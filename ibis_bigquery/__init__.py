@@ -8,8 +8,7 @@ import pydata_google_auth
 from pydata_google_auth import cache
 
 from . import version as ibis_bigquery_version
-from .client import (BigQueryClient, BigQueryDatabase, BigQueryQuery,
-                     BigQueryTable)
+from .client import BigQueryClient, BigQueryDatabase, BigQueryQuery, BigQueryTable
 from .compiler import BigQueryExprTranslator, BigQueryQueryBuilder
 
 try:
@@ -31,15 +30,13 @@ EXTERNAL_DATA_SCOPES = [
     "https://www.googleapis.com/auth/cloud-platform",
     "https://www.googleapis.com/auth/drive",
 ]
-CLIENT_ID = (
-    "546535678771-gvffde27nd83kfl6qbrnletqvkdmsese.apps.googleusercontent.com"
-)
+CLIENT_ID = "546535678771-gvffde27nd83kfl6qbrnletqvkdmsese.apps.googleusercontent.com"
 CLIENT_SECRET = "iU5ohAF2qcqrujegE3hQ1cPt"
 
 
 class Backend(BaseBackend):
-    name = 'bigquery'
-    kind = 'sql'
+    name = "bigquery"
+    kind = "sql"
     builder = BigQueryQueryBuilder
     translator = BigQueryExprTranslator
     query_class = BigQueryQuery
@@ -51,7 +48,7 @@ class Backend(BaseBackend):
     # https://github.com/ibis-project/ibis-bigquery/issues/30
     supports_divide_by_zero = True
     supports_floating_modulus = False
-    returned_timestamp_unit = 'us'
+    returned_timestamp_unit = "us"
 
     def connect(
         self,

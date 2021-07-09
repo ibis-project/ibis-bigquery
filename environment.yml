@@ -9,6 +9,7 @@ dependencies:
 - pydata-google-auth
 
 # dev
+- black=19.10b0 # Same as ibis
 - pytest
 - pytest-cov
 - pytest-mock
