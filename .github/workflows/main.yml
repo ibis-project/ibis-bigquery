@@ -44,7 +44,7 @@ jobs:
     #   if: always()
 
     - name: isort
-      run: isort --check-only .
+      run: isort --profile black --check-only .
       if: always()
 
   unit-tests:
