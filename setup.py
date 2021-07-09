@@ -57,5 +57,5 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
     ],
     license="Apache 2.0",
-    entry_points={"ibis.backends": ["bigquery = ibis_bigquery"],},
+    entry_points={"ibis.backends": ["bigquery = ibis_bigquery"]},
 )
