@@ -333,8 +333,10 @@ def test_set_operation(operation, sql):
     result = ibis_bigquery.compile(expr)
 
     query = f"""\
-SELECT `a` FROM t0
+SELECT `a`
+FROM t0
 {sql}
-SELECT `a` FROM t1"""
+SELECT `a`
+FROM t1"""
 
     assert result == query

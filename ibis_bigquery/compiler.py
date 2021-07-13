@@ -27,33 +27,46 @@ import regex as re
 import toolz
 
 try:
-    from ibis.backends.base.sql.registry import (fixed_arity, literal,
-                                                 operation_registry, reduction,
-                                                 unary)
+    from ibis.backends.base.sql.registry import (
+        fixed_arity,
+        literal,
+        operation_registry,
+        reduction,
+        unary,
+    )
 except ImportError:
     try:
         # 2.x
-        from ibis.backends.base.sql import (fixed_arity, literal,
-                                            operation_registry, reduction,
-                                            unary)
+        from ibis.backends.base.sql import (
+            fixed_arity,
+            literal,
+            operation_registry,
+            reduction,
+            unary,
+        )
     except ImportError:
         try:
             # 1.4
-            from ibis.backends.base_sql import (fixed_arity, literal,
-                                                operation_registry, reduction,
-                                                unary)
+            from ibis.backends.base_sql import (
+                fixed_arity,
+                literal,
+                operation_registry,
+                reduction,
+                unary,
+            )
         except ImportError:
             # 1.2
             from ibis.impala.compiler import _literal as literal
-            from ibis.impala.compiler import \
-                _operation_registry as operation_registry
+            from ibis.impala.compiler import _operation_registry as operation_registry
             from ibis.impala.compiler import _reduction as reduction
             from ibis.impala.compiler import fixed_arity, unary
 
 try:
-    from ibis.backends.base_sql.compiler import (BaseExprTranslator,
-                                                 BaseSelect,
-                                                 BaseTableSetFormatter)
+    from ibis.backends.base_sql.compiler import (
+        BaseExprTranslator,
+        BaseSelect,
+        BaseTableSetFormatter,
+    )
 except ImportError:
     # 1.2
     from ibis.impala.compiler import ImpalaExprTranslator as BaseExprTranslator
