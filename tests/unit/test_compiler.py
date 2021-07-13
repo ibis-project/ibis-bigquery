@@ -317,7 +317,8 @@ def test_large_compile():
 
 
 @pytest.mark.parametrize(
-    ("set_",), [("union", "ALL"), ("intersect", "DISTINCT"), ("except", "DISTINCT")]
+    ("set_", "all_or_distinct"),
+    [("union", "ALL"), ("intersect", "DISTINCT"), ("except", "DISTINCT")],
 )
 def test_set_operation(set_, all_or_distinct):
     t0 = ibis.table([("a", "int64")], name="t0")
