@@ -8,7 +8,8 @@ import pydata_google_auth
 from pydata_google_auth import cache
 
 from . import version as ibis_bigquery_version
-from .client import BigQueryClient, BigQueryDatabase, BigQueryQuery, BigQueryTable
+from .client import (BigQueryClient, BigQueryDatabase, BigQueryQuery,
+                     BigQueryTable)
 from .compiler import BigQueryExprTranslator, BigQueryQueryBuilder
 
 try:
