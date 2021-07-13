@@ -315,12 +315,13 @@ def test_large_compile():
     delta = datetime.datetime.now() - start
     assert delta.total_seconds() < 10
 
-@pytest.mark.parametrize(('set_', ), [
-    ('union', 'ALL'), ('intersect', 'DISTINCT'), ('except', 'DISTINCT')
-])
+
+@pytest.mark.parametrize(
+    ("set_",), [("union", "ALL"), ("intersect", "DISTINCT"), ("except", "DISTINCT")]
+)
 def test_set_operation(set_, all_or_distinct):
-    t0 = ibis.table([('a', 'int64')], name='t0')
-    t1 = ibis.table([('a', 'string')], name='t1')
+    t0 = ibis.table([("a", "int64")], name="t0")
+    t1 = ibis.table([("a", "string")], name="t1")
     expr = getattr(t0, set_)(t1)
     result = ibis_bigquery.compile(expr)
 

@@ -123,7 +123,8 @@ class BigQueryIntersection(comp.Union):
     @staticmethod
     def keyword(distinct):
         """Use INTERSECT DISTINCT."""
-        return 'INTERSECT DISTINCT'
+        return "INTERSECT DISTINCT"
+
 
 class BigQueryDifference(comp.Union):
     """Union of tables."""
@@ -131,7 +132,8 @@ class BigQueryDifference(comp.Union):
     @staticmethod
     def keyword(distinct):
         """Use EXCEPT DISTINCT."""
-        return 'EXCEPT DISTINCT'
+        return "EXCEPT DISTINCT"
+
 
 def find_bigquery_udf(expr):
     """Filter which includes only UDFs from expression tree."""
@@ -149,7 +151,7 @@ class BigQueryQueryBuilder(comp.QueryBuilder):
     union_class = BigQueryUnion
     difference_class = BigQueryDifference
     intersect_class = BigQueryIntersection
-    
+
     def generate_setup_queries(self):
         """Generate DDL for temporary resources."""
         queries = map(
