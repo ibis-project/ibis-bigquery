@@ -326,13 +326,13 @@ def test_large_compile():
 )
 def test_set_operation(operation, sql):
     t0 = ibis.table([("a", "int64")], name="t0")
-    t1 = ibis.table([("a", "string")], name="t1")
+    t1 = ibis.table([("a", "int64")], name="t1")
     expr = getattr(t0, operation)(t1)
     result = ibis_bigquery.compile(expr)
 
     query = f"""\
 SELECT `a` FROM t0
 {sql}
-SELECT `b` FROM t1"""
+SELECT `a` FROM t1"""
 
     assert result == query
