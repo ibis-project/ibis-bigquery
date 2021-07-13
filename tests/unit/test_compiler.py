@@ -327,7 +327,9 @@ def test_large_compile():
 def test_set_operation(operation, sql):
     t0 = ibis.table([("a", "int64")], name="t0")
     t1 = ibis.table([("a", "int64")], name="t1")
-    expr = getattr(t0, operation)(t1)
+    expr = getattr(t0, operation)(
+        t1, **({"distinct": False} if operation == "union" else {})
+    )
     result = ibis_bigquery.compile(expr)
 
     query = f"""\
