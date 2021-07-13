@@ -117,7 +117,7 @@ class BigQueryUnion(comp.Union):
         return "UNION DISTINCT" if distinct else "UNION ALL"
 
 
-class BigQueryIntersection(comp.Union):
+class BigQueryIntersection(comp.Intersection):
     """Union of tables."""
 
     @staticmethod
@@ -126,7 +126,7 @@ class BigQueryIntersection(comp.Union):
         return "INTERSECT DISTINCT"
 
 
-class BigQueryDifference(comp.Union):
+class BigQueryDifference(comp.Difference):
     """Union of tables."""
 
     @staticmethod
