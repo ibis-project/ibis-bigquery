@@ -21,7 +21,10 @@ import pandas as pd
 import regex as re
 from google.api_core.client_info import ClientInfo
 from google.api_core.exceptions import NotFound
-from ibis.client import Database, Query, SQLClient
+from ibis.backends.base import Database
+from ibis.backends.base.sql import SQLClient
+# Ibis 1.x
+#    from ibis.client import Database, SQLClient
 from multipledispatch import Dispatcher
 from pkg_resources import parse_version
 
@@ -169,32 +172,6 @@ def _find_scalar_parameter(expr):
     else:
         result = None
     return lin.proceed, result
-
-
-class BigQueryQuery(Query):
-    def __init__(self, client, ddl, query_parameters=None):
-        super().__init__(client, ddl)
-
-        # self.expr comes from the parent class
-        query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
-        self.query_parameters = [
-            bigquery_param(param.to_expr().name(query_parameter_names[param]), value)
-            for param, value in (query_parameters or {}).items()
-        ]
-
-    def _fetch(self, cursor):
-        df = cursor.query.to_dataframe()
-        schema = self.schema()
-        return schema.apply_to(df)
-
-    def execute(self):
-        # synchronous by default
-        with self.client._execute(
-            self.compiled_sql, results=True, query_parameters=self.query_parameters,
-        ) as cur:
-            result = self._fetch(cur)
-
-        return self._wrap_result(result)
 
 
 class BigQueryDatabase(Database):
@@ -388,10 +365,8 @@ class BigQueryClient(SQLClient):
             column.
 
         """
-        self.query_class = backend.query_class
         self.database_class = backend.database_class
         self.table_class = backend.table_class
-        self.dialect = backend.dialect
         (
             self.data_project,
             self.billing_project,
@@ -420,6 +395,10 @@ class BigQueryClient(SQLClient):
     @property
     def dataset_id(self):
         return self.dataset
+
+    def fetch_from_cursor(self, cursor, schema):
+        df = cursor.query.to_dataframe()
+        return schema.apply_to(df)
 
     def table(self, name, database=None):
         t = super().table(name, database=database)

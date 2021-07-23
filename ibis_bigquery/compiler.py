@@ -7,12 +7,18 @@ from functools import partial
 import ibis
 
 try:
-    import ibis.backends.base_sqlalchemy.compiler as comp
+    # 2.x
+    import ibis.backends.base.sql.compiler as comp
+    from ibis.backends.base.sql.compiler.query_builder import Compiler as QueryBuilder
 except ImportError:
     try:
-        import ibis.sql.compiler as comp
+        # 1.4
+        import ibis.backends.base_sqlalchemy.compiler as comp
+        from ibis.backends.base_sqlalchemy.compiler import QueryBuilder
     except ImportError:
-        import ibis.backends.base.sql.compiler as comp
+        # 1.2
+        import ibis.sql.compiler as comp
+        from ibis.sql.compiler import QueryBuilder
 try:
     import ibis.common.exceptions as com
 except ImportError:
@@ -62,16 +68,23 @@ except ImportError:
             from ibis.impala.compiler import fixed_arity, unary
 
 try:
-    from ibis.backends.base_sql.compiler import (
-        BaseExprTranslator,
-        BaseSelect,
-        BaseTableSetFormatter,
-    )
+    # 2.x
+    from ibis.backends.base.sql.compiler import ExprTranslator as BaseExprTranslator
+    from ibis.backends.base.sql.compiler import Select as BaseSelect
+    from ibis.backends.base.sql.compiler import TableSetFormatter as BaseTableSetFormatter
 except ImportError:
-    # 1.2
-    from ibis.impala.compiler import ImpalaExprTranslator as BaseExprTranslator
-    from ibis.impala.compiler import ImpalaSelect as BaseSelect
-    from ibis.impala.compiler import ImpalaTableSetFormatter as BaseTableSetFormatter
+    try:
+        # 1.4
+        from ibis.backends.base_sql.compiler import (
+            BaseExprTranslator,
+            BaseSelect,
+            BaseTableSetFormatter,
+        )
+    except ImportError:
+        # 1.2
+        from ibis.impala.compiler import ImpalaExprTranslator as BaseExprTranslator
+        from ibis.impala.compiler import ImpalaSelect as BaseSelect
+        from ibis.impala.compiler import ImpalaTableSetFormatter as BaseTableSetFormatter
 
 from multipledispatch import Dispatcher
 
@@ -126,7 +139,7 @@ def find_bigquery_udf(expr):
     return lin.proceed, result
 
 
-class BigQueryQueryBuilder(comp.QueryBuilder):
+class BigQueryQueryBuilder(QueryBuilder):
     """Generator of QueryASTs."""
 
     select_builder = BigQuerySelectBuilder

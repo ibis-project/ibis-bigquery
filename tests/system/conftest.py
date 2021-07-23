@@ -2,6 +2,7 @@ import os
 
 import ibis  # noqa: F401
 import pytest
+import google.auth
 from google.oauth2 import service_account
 
 import ibis_bigquery
@@ -17,9 +18,8 @@ def _credentials():
         "GOOGLE_APPLICATION_CREDENTIALS", None
     )
     if google_application_credentials is None:
-        pytest.skip(
-            "Environment variable GOOGLE_APPLICATION_CREDENTIALS is " "not defined"
-        )
+        creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        return creds
     elif not google_application_credentials:
         pytest.skip("Environment variable GOOGLE_APPLICATION_CREDENTIALS is empty")
     elif not os.path.exists(google_application_credentials):
