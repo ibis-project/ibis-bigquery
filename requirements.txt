@@ -1,5 +1,6 @@
 # core
 ibis-framework
+cached_property
 google-cloud-bigquery
 pydata-google-auth
 

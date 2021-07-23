@@ -5,6 +5,7 @@ dependencies:
 
 # core
 - ibis-framework  # TODO: require Ibis 2.0 when it's released
+- cached_property  # New in Ibis 2.0 https://github.com/ibis-project/ibis/pull/2805
 - google-cloud-bigquery-core >=1.12.0,<3.0.0dev
 - pydata-google-auth
 
