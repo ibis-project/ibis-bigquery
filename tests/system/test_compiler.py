@@ -1,5 +1,6 @@
 import ibis
 import ibis.expr.datatypes as dt
+import ibis.expr.api as api
 import packaging.version
 import pytest
 
@@ -34,6 +35,20 @@ UNION {expected_keyword}
 SELECT *
 FROM `{project_id}.testing.functional_alltypes`"""
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    ('distinct', 'expected_keyword'), [(True, 'DISTINCT'), (False, 'ALL')]
+    'operand', [lambda t: api.time('18:00'), lambda t: t.k]
+)
+@pytest.mark.parametrize('unit', ['h', 'm', 's', 'ms', 'us', 'ns'])
+def test_timestamp_timediff(operand, unit):
+    # import pytest;
+    # pytest.set_trace()
+    table = ibis.table([('c', 'timestamp')], name='t')
+    expr = operand(table).timediff(unit)
+    # assert isinstance(expr, ir.TimeValue)
+    # assert isinstance(expr.op(), ops.TimestampDiff)
 
 
 def test_ieee_divide(alltypes, project_id):

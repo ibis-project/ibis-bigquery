@@ -468,6 +468,7 @@ _operation_registry.update(
         ops.Time: unary("TIME"),
         ops.TimestampAdd: _timestamp_op("TIMESTAMP_ADD", {"h", "m", "s", "ms", "us"}),
         ops.TimestampSub: _timestamp_op("TIMESTAMP_SUB", {"h", "m", "s", "ms", "us"}),
+		ops.TimestampDiff: _timestamp_op('TIME_DIFF', {'h', 'm', 's', 'ms', 'us'}),
         ops.DateAdd: _timestamp_op("DATE_ADD", {"D", "W", "M", "Q", "Y"}),
         ops.DateSub: _timestamp_op("DATE_SUB", {"D", "W", "M", "Q", "Y"}),
         ops.TimestampNow: fixed_arity("CURRENT_TIMESTAMP", 0),
