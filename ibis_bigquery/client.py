@@ -19,7 +19,7 @@ import ibis.expr.schema as sch
 import ibis.expr.types as ir
 import pandas as pd
 from google.api_core.client_info import ClientInfo
-from ibis.client import Database, Query
+from ibis.backends.base import Database, Query
 from multipledispatch import Dispatcher
 
 from .datatypes import ibis_type_to_bigquery_type
