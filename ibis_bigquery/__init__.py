@@ -1,15 +1,21 @@
 """BigQuery public API."""
-
 from typing import Optional
 
 import google.auth.credentials
-import google.cloud.bigquery  # noqa: F401, fail early if bigquery is missing
+import google.cloud.bigquery as bq
+from google.api_core.exceptions import NotFound
 import pydata_google_auth
 from pydata_google_auth import cache
 
+import ibis.expr.schema as sch
+
 from . import version as ibis_bigquery_version
-from .client import BigQueryClient, BigQueryDatabase, BigQueryQuery, BigQueryTable
-from .compiler import BigQueryExprTranslator, BigQueryQueryBuilder
+from .client import (
+    BigQueryClient, BigQueryDatabase, BigQueryTable,
+    parse_project_and_dataset, _create_client_info,
+    rename_partitioned_column, bigquery_field_to_ibis_dtype,
+    BigQueryCursor)
+from .compiler import BigQueryCompiler
 
 try:
     from ibis.backends.base import BaseBackend
@@ -36,10 +42,7 @@ CLIENT_SECRET = "iU5ohAF2qcqrujegE3hQ1cPt"
 
 class Backend(BaseBackend):
     name = "bigquery"
-    kind = "sql"
-    builder = BigQueryQueryBuilder
-    translator = BigQueryExprTranslator
-    query_class = BigQueryQuery
+    compiler = BigQueryCompiler
     database_class = BigQueryDatabase
     table_class = BigQueryTable
 
@@ -141,14 +144,134 @@ class Backend(BaseBackend):
 
         project_id = project_id or default_project_id
 
-        return BigQueryClient(
-            backend=self,
-            project_id=project_id,
-            dataset_id=dataset_id,
+        new_backend = self.__class__()
+
+        (
+            new_backend.data_project,
+            new_backend.billing_project,
+            new_backend.dataset,
+        ) = parse_project_and_dataset(project_id, dataset_id)
+
+        new_backend.client = bq.Client(
+            project=new_backend.billing_project,
             credentials=credentials,
-            application_name=application_name,
-            partition_column=partition_column,
+            client_info=_create_client_info(application_name),
         )
+        new_backend.partition_column = partition_column
+
+        return new_backend
+
+    def _parse_project_and_dataset(self, dataset):
+        if not dataset and not self.dataset:
+            raise ValueError("Unable to determine BigQuery dataset.")
+        project, _, dataset = parse_project_and_dataset(
+            self.billing_project,
+            dataset or "{}.{}".format(self.data_project, self.dataset),
+        )
+        return project, dataset
+
+    @property
+    def project_id(self):
+        return self.data_project
+
+    @property
+    def dataset_id(self):
+        return self.dataset
+
+    def table(self, name, database=None):
+        t = super().table(name, database=database)
+        project, dataset, name = t.op().name.split(".")
+        dataset_ref = self.client.dataset(dataset, project=project)
+        table_ref = dataset_ref.table(name)
+        bq_table = self.client.get_table(table_ref)
+        return rename_partitioned_column(t, bq_table, self.partition_column)
+
+    def _get_query(self, dml, **kwargs):
+        return self.query_class(self, dml, query_parameters=dml.context.params)
+
+    def _fully_qualified_name(self, name, database):
+        project, dataset = self._parse_project_and_dataset(database)
+        return "{}.{}.{}".format(project, dataset, name)
+
+    def _get_table_schema(self, qualified_name):
+        dataset, table = qualified_name.rsplit(".", 1)
+        assert dataset is not None, "dataset is None"
+        return self.get_schema(table, database=dataset)
+
+    def _get_schema_using_query(self, limited_query):
+        with self._execute(limited_query, results=True) as cur:
+            # resets the state of the cursor and closes operation
+            names, ibis_types = self._adapt_types(cur.description)
+        return sch.Schema(names, ibis_types)
+
+    def _adapt_types(self, descr):
+        names = []
+        adapted_types = []
+        for col in descr:
+            names.append(col.name)
+            typename = bigquery_field_to_ibis_dtype(col)
+            adapted_types.append(typename)
+        return names, adapted_types
+
+    def _execute(self, stmt, results=True, query_parameters=None):
+        job_config = bq.job.QueryJobConfig()
+        job_config.query_parameters = query_parameters or []
+        job_config.use_legacy_sql = False  # False by default in >=0.28
+        query = self.client.query(
+            stmt, job_config=job_config, project=self.billing_project
+        )
+        query.result()  # blocks until finished
+        return BigQueryCursor(query)
+
+    def database(self, name=None):
+        if name is None and self.dataset is None:
+            raise ValueError(
+                "Unable to determine BigQuery dataset. Call "
+                "client.database('my_dataset') or set_database('my_dataset') "
+                "to assign your client a dataset."
+            )
+        return self.database_class(name or self.dataset, self)
+
+    @property
+    def current_database(self):
+        return self.database(self.dataset)
+
+    def set_database(self, name):
+        self.data_project, self.dataset = self._parse_project_and_dataset(name)
+
+    def exists_database(self, name):
+        project, dataset = self._parse_project_and_dataset(name)
+        client = self.client
+        dataset_ref = client.dataset(dataset, project=project)
+        try:
+            client.get_dataset(dataset_ref)
+        except NotFound:
+            return False
+        else:
+            return True
+
+    def list_databases(self, like=None):
+        results = [
+            dataset.dataset_id
+            for dataset in self.client.list_datasets(project=self.data_project)
+        ]
+        return self._filter_with_like(results, like)
+
+    def list_tables(self, like=None, database=None):
+        project, dataset = self._parse_project_and_dataset(database)
+        dataset_ref = bq.DatasetReference(project, dataset)
+        result = [table.table_id for table in self.client.list_tables(dataset_ref)]
+        return self._filter_with_like(result, like)
+
+    def get_schema(self, name, database=None):
+        project, dataset = self._parse_project_and_dataset(database)
+        table_ref = self.client.dataset(dataset, project=project).table(name)
+        bq_table = self.client.get_table(table_ref)
+        return sch.infer(bq_table)
+
+    @property
+    def version(self):
+        return bq.__version__
 
 
 def compile(expr, params=None):
