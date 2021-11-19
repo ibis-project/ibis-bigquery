@@ -7,20 +7,16 @@ from google.api_core.exceptions import NotFound
 import pydata_google_auth
 from pydata_google_auth import cache
 
+from ibis.backends.base import BaseBackend
 import ibis.expr.schema as sch
 
 from . import version as ibis_bigquery_version
 from .client import (
-    BigQueryClient, BigQueryDatabase, BigQueryTable,
+    BigQueryDatabase, BigQueryTable,
     parse_project_and_dataset, _create_client_info,
     rename_partitioned_column, bigquery_field_to_ibis_dtype,
     BigQueryCursor)
 from .compiler import BigQueryCompiler
-
-try:
-    from ibis.backends.base import BaseBackend
-except ImportError:
-    from .backcompat import BaseBackend
 
 try:
     from .udf import udf  # noqa F401
@@ -63,8 +59,8 @@ class Backend(BaseBackend):
         auth_external_data: bool = False,
         auth_cache: str = "default",
         partition_column: Optional[str] = "PARTITIONTIME",
-    ) -> BigQueryClient:
-        """Create a BigQueryClient for use with Ibis.
+    ) -> "Backend":
+        """Create a :class:`Backend` for use with Ibis.
 
         Parameters
         ----------
@@ -108,7 +104,7 @@ class Backend(BaseBackend):
 
         Returns
         -------
-        BigQueryClient
+        Backend
 
         """
         default_project_id = None
@@ -186,23 +182,23 @@ class Backend(BaseBackend):
         bq_table = self.client.get_table(table_ref)
         return rename_partitioned_column(t, bq_table, self.partition_column)
 
-    def _get_query(self, dml, **kwargs):
-        return self.query_class(self, dml, query_parameters=dml.context.params)
-
     def _fully_qualified_name(self, name, database):
         project, dataset = self._parse_project_and_dataset(database)
         return "{}.{}.{}".format(project, dataset, name)
-
-    def _get_table_schema(self, qualified_name):
-        dataset, table = qualified_name.rsplit(".", 1)
-        assert dataset is not None, "dataset is None"
-        return self.get_schema(table, database=dataset)
 
     def _get_schema_using_query(self, limited_query):
         with self._execute(limited_query, results=True) as cur:
             # resets the state of the cursor and closes operation
             names, ibis_types = self._adapt_types(cur.description)
         return sch.Schema(names, ibis_types)
+
+    def _get_table_schema(self, qualified_name):
+        dataset, table = qualified_name.rsplit(".", 1)
+        assert dataset is not None, "dataset is None"
+        return self.get_schema(table, database=dataset)
+
+    def _get_query(self, dml, **kwargs):
+        return self.query_class(self, dml, query_parameters=dml.context.params)
 
     def _adapt_types(self, descr):
         names = []
@@ -223,6 +219,10 @@ class Backend(BaseBackend):
         query.result()  # blocks until finished
         return BigQueryCursor(query)
 
+    @property
+    def current_database(self):
+        return self.database(self.dataset)
+
     def database(self, name=None):
         if name is None and self.dataset is None:
             raise ValueError(
@@ -231,13 +231,6 @@ class Backend(BaseBackend):
                 "to assign your client a dataset."
             )
         return self.database_class(name or self.dataset, self)
-
-    @property
-    def current_database(self):
-        return self.database(self.dataset)
-
-    def set_database(self, name):
-        self.data_project, self.dataset = self._parse_project_and_dataset(name)
 
     def exists_database(self, name):
         project, dataset = self._parse_project_and_dataset(name)
@@ -249,6 +242,16 @@ class Backend(BaseBackend):
             return False
         else:
             return True
+
+    def fetch_from_cursor(self, cursor, schema):
+        df = cursor.query.to_dataframe()
+        return schema.apply_to(df)
+
+    def get_schema(self, name, database=None):
+        project, dataset = self._parse_project_and_dataset(database)
+        table_ref = self.client.dataset(dataset, project=project).table(name)
+        bq_table = self.client.get_table(table_ref)
+        return sch.infer(bq_table)
 
     def list_databases(self, like=None):
         results = [
@@ -263,18 +266,15 @@ class Backend(BaseBackend):
         result = [table.table_id for table in self.client.list_tables(dataset_ref)]
         return self._filter_with_like(result, like)
 
-    def get_schema(self, name, database=None):
-        project, dataset = self._parse_project_and_dataset(database)
-        table_ref = self.client.dataset(dataset, project=project).table(name)
-        bq_table = self.client.get_table(table_ref)
-        return sch.infer(bq_table)
+    def set_database(self, name):
+        self.data_project, self.dataset = self._parse_project_and_dataset(name)
 
     @property
     def version(self):
         return bq.__version__
 
 
-def compile(expr, params=None):
+def compile(expr, params=None, **kwargs):
     """Compile an expression for BigQuery.
     Returns
     -------
@@ -284,7 +284,7 @@ def compile(expr, params=None):
     ibis.expr.types.Expr.compile
     """
     backend = Backend()
-    return backend.compile(expr, params=params)
+    return backend.compile(expr, params=params, **kwargs)
 
 
 def connect(
@@ -296,8 +296,8 @@ def connect(
     auth_external_data: bool = False,
     auth_cache: str = "default",
     partition_column: Optional[str] = "PARTITIONTIME",
-) -> BigQueryClient:
-    """Create a BigQueryClient for use with Ibis.
+) -> Backend:
+    """Create a :class:`Backend` for use with Ibis.
 
     Parameters
     ----------
@@ -341,7 +341,7 @@ def connect(
 
     Returns
     -------
-    BigQueryClient
+    Backend
 
     """
     backend = Backend()

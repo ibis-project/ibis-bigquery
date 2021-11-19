@@ -21,7 +21,7 @@ import numpy as np
 import regex as re
 import toolz
 
-from ibis.backends.base.sql import (
+from ibis.backends.base.sql.registry import (
     fixed_arity,
     literal,
     operation_registry,
@@ -29,7 +29,7 @@ from ibis.backends.base.sql import (
     unary,
 )
 
-from ibis.backends.base_sql.compiler import (
+from ibis.backends.base.sql.compiler import (
     ExprTranslator,
     TableSetFormatter,
 )
@@ -428,6 +428,14 @@ _operation_registry = {
 class BigQueryExprTranslator(ExprTranslator):
     """Translate expressions to strings."""
     _registry = _operation_registry
+
+    @classmethod
+    def compiles(cls, klass):
+        def decorator(f):
+            cls._registry[klass] = f
+            return f
+
+        return decorator
 
     def _trans_param(self, expr):
         op = expr.op()

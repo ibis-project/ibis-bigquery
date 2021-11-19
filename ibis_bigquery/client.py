@@ -19,7 +19,7 @@ import ibis.expr.schema as sch
 import ibis.expr.types as ir
 import pandas as pd
 from google.api_core.client_info import ClientInfo
-from ibis.backends.base import Database, Query
+from ibis.backends.base import Database
 from multipledispatch import Dispatcher
 
 from .datatypes import ibis_type_to_bigquery_type
@@ -165,33 +165,6 @@ def _find_scalar_parameter(expr):
     else:
         result = None
     return lin.proceed, result
-
-
-class BigQueryQuery(Query):
-    def __init__(self, client, ddl, query_parameters=None):
-        super().__init__(client, ddl)
-
-        # self.expr comes from the parent class
-        query_parameter_names = dict(lin.traverse(_find_scalar_parameter, self.expr))
-        self.query_parameters = [
-            bigquery_param(param.to_expr().name(query_parameter_names[param]), value)
-            for param, value in (query_parameters or {}).items()
-        ]
-
-    def _fetch(self, cursor):
-        df = cursor.query.to_dataframe()
-        schema = self.schema()
-        return schema.apply_to(df)
-
-    def execute(self):
-        # synchronous by default
-        with self.client._execute(
-            self.compiled_sql, results=True, query_parameters=self.query_parameters,
-        ) as cur:
-            result = self._fetch(cur)
-
-        return self._wrap_result(result)
-
 
 class BigQueryDatabase(Database):
     """A BigQuery dataset."""
