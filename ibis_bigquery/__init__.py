@@ -176,7 +176,6 @@ class Backend(BaseSQLBackend):
         return self.dataset
 
     def table(self, name, database=None) -> ir.TableExpr:
-        table_ref = bq.TableReference.from_string()
         t = super().table(name, database=database)
         project, dataset, name = t.op().name.split(".")
         dataset_ref = self.client.dataset(dataset, project=project)
