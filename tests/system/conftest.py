@@ -1,46 +1,44 @@
 import os
+from google.auth.environment_vars import PROJECT
 
 import ibis  # noqa: F401
 import pytest
-from google.oauth2 import service_account
+import google.auth
+import google.auth.exceptions
 
 import ibis_bigquery
 
-PROJECT_ID = os.environ.get("GOOGLE_BIGQUERY_PROJECT_ID", "ibis-gbq")
+DEFAULT_PROJECT_ID = "ibis-gbq"
+PROJECT_ID_ENV_VAR = "GOOGLE_BIGQUERY_PROJECT_ID"
 DATASET_ID = "testing"
 
 bq = ibis_bigquery.Backend()
 
 
-def _credentials():
-    google_application_credentials = os.environ.get(
-        "GOOGLE_APPLICATION_CREDENTIALS", None
-    )
-    if google_application_credentials is None:
-        pytest.skip(
-            "Environment variable GOOGLE_APPLICATION_CREDENTIALS is " "not defined"
-        )
-    elif not google_application_credentials:
-        pytest.skip("Environment variable GOOGLE_APPLICATION_CREDENTIALS is empty")
-    elif not os.path.exists(google_application_credentials):
-        pytest.skip(
-            "Environment variable GOOGLE_APPLICATION_CREDENTIALS points "
-            "to {}, which does not exist".format(google_application_credentials)
-        )
-
-    return service_account.Credentials.from_service_account_file(
-        google_application_credentials
-    )
+@pytest.fixture(scope="session")
+def default_credentials():
+    try:
+        credentials, project_id = google.auth.default(scopes=ibis_bigquery.EXTERNAL_DATA_SCOPES)
+    except google.auth.excecptions.DefaultCredentialsError as exc:
+        pytest.skip(f"Could not get GCP credentials: {exc}")
+    
+    return credentials, project_id
 
 
 @pytest.fixture(scope="session")
-def project_id():
-    return PROJECT_ID
+def project_id(default_credentials):
+    project_id = os.getenv(PROJECT_ID_ENV_VAR)
+    if project_id is None:
+        _, project_id = default_credentials
+    if project_id is None:
+        project_id = DEFAULT_PROJECT_ID
+    return project_id
 
 
 @pytest.fixture(scope="session")
-def credentials():
-    return _credentials()
+def credentials(default_credentials):
+    credentials, _ = default_credentials
+    return credentials
 
 
 @pytest.fixture(scope="session")

@@ -7,9 +7,9 @@ from google.api_core.exceptions import NotFound
 import pydata_google_auth
 from pydata_google_auth import cache
 
-from ibis.backends.base import BaseBackend
+from ibis.backends.base.sql import BaseSQLBackend
 import ibis.expr.schema as sch
-from ibis.expr.typing import TimeContext
+import ibis.expr.types as ir
 
 from . import version as ibis_bigquery_version
 from .client import (
@@ -37,7 +37,7 @@ CLIENT_ID = "546535678771-gvffde27nd83kfl6qbrnletqvkdmsese.apps.googleuserconten
 CLIENT_SECRET = "iU5ohAF2qcqrujegE3hQ1cPt"
 
 
-class Backend(BaseBackend):
+class Backend(BaseSQLBackend):
     name = "bigquery"
     compiler = BigQueryCompiler
     database_class = BigQueryDatabase
@@ -175,7 +175,8 @@ class Backend(BaseBackend):
     def dataset_id(self):
         return self.dataset
 
-    def table(self, name, database=None):
+    def table(self, name, database=None) -> ir.TableExpr:
+        table_ref = bq.TableReference.from_string()
         t = super().table(name, database=database)
         project, dataset, name = t.op().name.split(".")
         dataset_ref = self.client.dataset(dataset, project=project)
@@ -223,25 +224,6 @@ class Backend(BaseBackend):
     @property
     def current_database(self):
         return self.database(self.dataset)
-
-    def compile(
-        self,
-        expr,
-        limit=None,
-        params=None,
-        timecontext: Optional[TimeContext] = None,
-    ):
-        """Translate expression.
-        Translate expression to one or more queries according to
-        backend target.
-        Returns
-        -------
-        output : single query or list of queries
-        """
-        return self.compiler.to_ast_ensure_limit(
-            expr, limit, params=params
-        ).compile()
-
 
     def database(self, name=None):
         if name is None and self.dataset is None:
