@@ -25,7 +25,7 @@ def test_table(alltypes):
 
 
 def test_column_execute(alltypes, df):
-    col_name = 'float_col'
+    col_name = "float_col"
     expr = alltypes[col_name]
     result = expr.execute()
     expected = df[col_name]
@@ -38,14 +38,14 @@ def test_column_execute(alltypes, df):
 
 
 def test_literal_execute(client):
-    expected = '1234'
+    expected = "1234"
     expr = ibis.literal(expected)
     result = client.execute(expr)
     assert result == expected
 
 
 def test_simple_aggregate_execute(alltypes, df):
-    col_name = 'float_col'
+    col_name = "float_col"
     expr = alltypes[col_name].sum()
     result = expr.execute()
     expected = df[col_name].sum()
@@ -53,12 +53,12 @@ def test_simple_aggregate_execute(alltypes, df):
 
 
 def test_list_tables(client):
-    tables = client.list_tables(like='functional_alltypes')
-    assert set(tables) == {'functional_alltypes', 'functional_alltypes_parted'}
+    tables = client.list_tables(like="functional_alltypes")
+    assert set(tables) == {"functional_alltypes", "functional_alltypes_parted"}
 
 
 def test_current_database(client):
-    assert client.current_database.name == 'testing'
+    assert client.current_database.name == "testing"
     assert client.current_database.name == client.dataset_id
     assert client.current_database.tables == client.list_tables()
 
@@ -69,7 +69,7 @@ def test_database(client):
 
 
 def test_compile_toplevel():
-    t = ibis.table([('foo', 'double')], name='t0')
+    t = ibis.table([("foo", "double")], name="t0")
 
     # it works!
     expr = t.foo.sum()
@@ -83,9 +83,9 @@ FROM t0"""  # noqa
 
 
 def test_struct_field_access(struct_table):
-    expr = struct_table.struct_col['string_field']
+    expr = struct_table.struct_col["string_field"]
     result = expr.execute()
-    expected = pd.Series([None, 'a'], name='tmp')
+    expected = pd.Series([None, "a"], name="tmp")
     tm.assert_series_equal(result, expected)
 
 
@@ -94,10 +94,10 @@ def test_array_index(struct_table):
     result = expr.execute()
     expected = pd.Series(
         [
-            {'int_field': None, 'string_field': None},
-            {'int_field': None, 'string_field': 'hijklmnop'},
+            {"int_field": None, "string_field": None},
+            {"int_field": None, "string_field": "hijklmnop"},
         ],
-        name='tmp',
+        name="tmp",
     )
     tm.assert_series_equal(result, expected)
 
@@ -109,19 +109,19 @@ def test_array_concat(struct_table):
     expected = pd.Series(
         [
             [
-                {'int_field': 12345, 'string_field': 'abcdefg'},
-                {'int_field': None, 'string_field': None},
-                {'int_field': 12345, 'string_field': 'abcdefg'},
-                {'int_field': None, 'string_field': None},
+                {"int_field": 12345, "string_field": "abcdefg"},
+                {"int_field": None, "string_field": None},
+                {"int_field": 12345, "string_field": "abcdefg"},
+                {"int_field": None, "string_field": None},
             ],
             [
-                {'int_field': 12345, 'string_field': 'abcdefg'},
-                {'int_field': None, 'string_field': 'hijklmnop'},
-                {'int_field': 12345, 'string_field': 'abcdefg'},
-                {'int_field': None, 'string_field': 'hijklmnop'},
+                {"int_field": 12345, "string_field": "abcdefg"},
+                {"int_field": None, "string_field": "hijklmnop"},
+                {"int_field": 12345, "string_field": "abcdefg"},
+                {"int_field": None, "string_field": "hijklmnop"},
             ],
         ],
-        name='tmp',
+        name="tmp",
     )
     tm.assert_series_equal(result, expected)
 
@@ -129,61 +129,55 @@ def test_array_concat(struct_table):
 def test_array_length(struct_table):
     expr = struct_table.array_of_structs_col.length()
     result = expr.execute()
-    expected = pd.Series([2, 2], name='tmp')
+    expected = pd.Series([2, 2], name="tmp")
     tm.assert_series_equal(result, expected)
 
 
 def test_array_collect(struct_table):
-    key = struct_table.array_of_structs_col[0]['string_field']
+    key = struct_table.array_of_structs_col[0]["string_field"]
     expr = struct_table.groupby(key=key).aggregate(
-        foo=lambda t: t.array_of_structs_col[0]['int_field'].collect()
+        foo=lambda t: t.array_of_structs_col[0]["int_field"].collect()
     )
     result = expr.execute()
     expected = struct_table.execute()
     expected = (
         expected.assign(
-            key=expected.array_of_structs_col.apply(
-                lambda x: x[0]['string_field']
-            )
+            key=expected.array_of_structs_col.apply(lambda x: x[0]["string_field"])
         )
-        .groupby('key')
+        .groupby("key")
         .apply(
-            lambda df: list(
-                df.array_of_structs_col.apply(lambda x: x[0]['int_field'])
-            )
+            lambda df: list(df.array_of_structs_col.apply(lambda x: x[0]["int_field"]))
         )
         .reset_index()
-        .rename(columns={0: 'foo'})
+        .rename(columns={0: "foo"})
     )
     tm.assert_frame_equal(result, expected)
 
 
 def test_count_distinct_with_filter(alltypes):
-    expr = alltypes.string_col.nunique(
-        where=alltypes.string_col.cast('int64') > 1
-    )
+    expr = alltypes.string_col.nunique(where=alltypes.string_col.cast("int64") > 1)
     result = expr.execute()
     expected = alltypes.string_col.execute()
-    expected = expected[expected.astype('int64') > 1].nunique()
+    expected = expected[expected.astype("int64") > 1].nunique()
     assert result == expected
 
 
-@pytest.mark.parametrize('type', ['date', dt.date])
+@pytest.mark.parametrize("type", ["date", dt.date])
 def test_cast_string_to_date(alltypes, df, type):
     import toolz
 
     string_col = alltypes.date_string_col
-    month, day, year = toolz.take(3, string_col.split('/'))
+    month, day, year = toolz.take(3, string_col.split("/"))
 
-    expr = '20' + ibis.literal('-').join([year, month, day])
+    expr = "20" + ibis.literal("-").join([year, month, day])
     expr = expr.cast(type)
 
     result = (
         expr.execute()
-        .astype('datetime64[ns]')
+        .astype("datetime64[ns]")
         .sort_values()
         .reset_index(drop=True)
-        .rename('date_string_col')
+        .rename("date_string_col")
     )
     expected = (
         pd.to_datetime(df.date_string_col)
@@ -201,26 +195,26 @@ def test_has_partitions(alltypes, parted_alltypes, client):
 
 
 def test_different_partition_col_name(monkeypatch, client):
-    col = 'FOO_BAR'
-    monkeypatch.setattr(client, 'partition_column', col)
-    alltypes = client.table('functional_alltypes')
-    parted_alltypes = client.table('functional_alltypes_parted')
+    col = "FOO_BAR"
+    monkeypatch.setattr(client, "partition_column", col)
+    alltypes = client.table("functional_alltypes")
+    parted_alltypes = client.table("functional_alltypes_parted")
     assert col not in alltypes.columns
     assert col in parted_alltypes.columns
 
 
 def test_subquery_scalar_params(alltypes, project_id):
     t = alltypes
-    param = ibis.param('timestamp').name('my_param')
+    param = ibis.param("timestamp").name("my_param")
     expr = (
-        t[['float_col', 'timestamp_col', 'int_col', 'string_col']][
+        t[["float_col", "timestamp_col", "int_col", "string_col"]][
             lambda t: t.timestamp_col < param
         ]
-        .groupby('string_col')
+        .groupby("string_col")
         .aggregate(foo=lambda t: t.float_col.sum())
         .foo.count()
     )
-    result = expr.compile(params={param: '20140101'})
+    result = expr.compile(params={param: "20140101"})
     expected = """\
 SELECT count(`foo`) AS `count`
 FROM (
@@ -240,19 +234,17 @@ FROM (
 def test_scalar_param_string(alltypes, df):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    param = ibis.param('string')
+    param = ibis.param("string")
     expr = alltypes[alltypes.string_col == param]
 
-    string_value = '0'
+    string_value = "0"
     result = (
         expr.execute(params={param: string_value})
-        .sort_values('id')
+        .sort_values("id")
         .reset_index(drop=True)
     )
     expected = (
-        df.loc[df.string_col == string_value]
-        .sort_values('id')
-        .reset_index(drop=True)
+        df.loc[df.string_col == string_value].sort_values("id").reset_index(drop=True)
     )
     tm.assert_frame_equal(result, expected)
 
@@ -260,18 +252,18 @@ def test_scalar_param_string(alltypes, df):
 def test_scalar_param_int64(alltypes, df):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    param = ibis.param('int64')
-    expr = alltypes[alltypes.string_col.cast('int64') == param]
+    param = ibis.param("int64")
+    expr = alltypes[alltypes.string_col.cast("int64") == param]
 
     int64_value = 0
     result = (
         expr.execute(params={param: int64_value})
-        .sort_values('id')
+        .sort_values("id")
         .reset_index(drop=True)
     )
     expected = (
-        df.loc[df.string_col.astype('int64') == int64_value]
-        .sort_values('id')
+        df.loc[df.string_col.astype("int64") == int64_value]
+        .sort_values("id")
         .reset_index(drop=True)
     )
     tm.assert_frame_equal(result, expected)
@@ -280,18 +272,18 @@ def test_scalar_param_int64(alltypes, df):
 def test_scalar_param_double(alltypes, df):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    param = ibis.param('double')
-    expr = alltypes[alltypes.string_col.cast('int64').cast('double') == param]
+    param = ibis.param("double")
+    expr = alltypes[alltypes.string_col.cast("int64").cast("double") == param]
 
     double_value = 0.0
     result = (
         expr.execute(params={param: double_value})
-        .sort_values('id')
+        .sort_values("id")
         .reset_index(drop=True)
     )
     expected = (
-        df.loc[df.string_col.astype('int64').astype('float64') == double_value]
-        .sort_values('id')
+        df.loc[df.string_col.astype("int64").astype("float64") == double_value]
+        .sort_values("id")
         .reset_index(drop=True)
     )
     tm.assert_frame_equal(result, expected)
@@ -300,27 +292,27 @@ def test_scalar_param_double(alltypes, df):
 def test_scalar_param_boolean(alltypes, df):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    param = ibis.param('boolean')
-    expr = alltypes[(alltypes.string_col.cast('int64') == 0) == param]
+    param = ibis.param("boolean")
+    expr = alltypes[(alltypes.string_col.cast("int64") == 0) == param]
 
     bool_value = True
     result = (
         expr.execute(params={param: bool_value})
-        .sort_values('id')
+        .sort_values("id")
         .reset_index(drop=True)
     )
     expected = (
-        df.loc[df.string_col.astype('int64') == 0]
-        .sort_values('id')
+        df.loc[df.string_col.astype("int64") == 0]
+        .sort_values("id")
         .reset_index(drop=True)
     )
     tm.assert_frame_equal(result, expected)
 
 
 @pytest.mark.parametrize(
-    'timestamp_value',
+    "timestamp_value",
     [
-        '2009-01-20 01:02:03',
+        "2009-01-20 01:02:03",
         datetime.date(2009, 1, 20),
         datetime.datetime(2009, 1, 20, 1, 2, 3),
     ],
@@ -328,42 +320,42 @@ def test_scalar_param_boolean(alltypes, df):
 def test_scalar_param_timestamp(alltypes, df, timestamp_value):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    param = ibis.param('timestamp')
-    expr = alltypes[alltypes.timestamp_col <= param][['timestamp_col']]
+    param = ibis.param("timestamp")
+    expr = alltypes[alltypes.timestamp_col <= param][["timestamp_col"]]
 
     result = (
         expr.execute(params={param: timestamp_value})
-        .sort_values('timestamp_col')
+        .sort_values("timestamp_col")
         .reset_index(drop=True)
     )
     value = pd.Timestamp(timestamp_value)
     expected = (
-        df.loc[df.timestamp_col <= value, ['timestamp_col']]
-        .sort_values('timestamp_col')
+        df.loc[df.timestamp_col <= value, ["timestamp_col"]]
+        .sort_values("timestamp_col")
         .reset_index(drop=True)
     )
     tm.assert_frame_equal(result, expected)
 
 
 @pytest.mark.parametrize(
-    'date_value',
-    ['2009-01-20', datetime.date(2009, 1, 20), datetime.datetime(2009, 1, 20)],
+    "date_value",
+    ["2009-01-20", datetime.date(2009, 1, 20), datetime.datetime(2009, 1, 20)],
 )
 def test_scalar_param_date(alltypes, df, date_value):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    param = ibis.param('date')
-    expr = alltypes[alltypes.timestamp_col.cast('date') <= param]
+    param = ibis.param("date")
+    expr = alltypes[alltypes.timestamp_col.cast("date") <= param]
 
     result = (
         expr.execute(params={param: date_value})
-        .sort_values('timestamp_col')
+        .sort_values("timestamp_col")
         .reset_index(drop=True)
     )
     value = pd.Timestamp(date_value)
     expected = (
         df.loc[df.timestamp_col.dt.normalize() <= value]
-        .sort_values('timestamp_col')
+        .sort_values("timestamp_col")
         .reset_index(drop=True)
     )
     tm.assert_frame_equal(result, expected)
@@ -372,23 +364,21 @@ def test_scalar_param_date(alltypes, df, date_value):
 def test_scalar_param_array(alltypes, df):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    param = ibis.param('array<double>')
-    expr = alltypes.sort_by('id').limit(1).double_col.collect() + param
+    param = ibis.param("array<double>")
+    expr = alltypes.sort_by("id").limit(1).double_col.collect() + param
     result = expr.execute(params={param: [1]})
-    expected = [df.sort_values('id').double_col.iat[0]] + [1.0]
+    expected = [df.sort_values("id").double_col.iat[0]] + [1.0]
     assert all(
-        float(result[index]) == expected[index]
-        for index
-        in range(len(expected))
+        float(result[index]) == expected[index] for index in range(len(expected))
     )
 
 
 def test_scalar_param_struct(client):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    struct_type = dt.Struct.from_tuples([('x', dt.int64), ('y', dt.string)])
+    struct_type = dt.Struct.from_tuples([("x", dt.int64), ("y", dt.string)])
     param = ibis.param(struct_type)
-    value = collections.OrderedDict([('x', 1), ('y', 'foobar')])
+    value = collections.OrderedDict([("x", 1), ("y", "foobar")])
     result = client.execute(param, {param: value})
     assert value == result
 
@@ -396,61 +386,60 @@ def test_scalar_param_struct(client):
 def test_scalar_param_nested(client):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    param = ibis.param('struct<x: array<struct<y: array<double>>>>')
+    param = ibis.param("struct<x: array<struct<y: array<double>>>>")
     value = collections.OrderedDict(
-        [('x', [collections.OrderedDict([('y', [1.0, 2.0, 3.0])])])]
+        [("x", [collections.OrderedDict([("y", [1.0, 2.0, 3.0])])])]
     )
     result = client.execute(param, {param: value})
     assert all(
         float(res) == float(val)
-        for res, val
-        in zip(value["x"][0]["y"], result["x"][0]["y"])
+        for res, val in zip(value["x"][0]["y"], result["x"][0]["y"])
     )
 
 
 def test_repr_struct_of_array_of_struct():
-    param = ibis.param('struct<x: array<struct<y: array<double>>>>')
-    param = param.name('foo')
+    param = ibis.param("struct<x: array<struct<y: array<double>>>>")
+    param = param.name("foo")
     value = collections.OrderedDict(
-        [('x', [collections.OrderedDict([('y', [1.0, 2.0, 3.0])])])]
+        [("x", [collections.OrderedDict([("y", [1.0, 2.0, 3.0])])])]
     )
     result = bigquery_param(param, value)
     expected = {
-        'name': 'foo',
-        'parameterType': {
-            'structTypes': [
+        "name": "foo",
+        "parameterType": {
+            "structTypes": [
                 {
-                    'name': 'x',
-                    'type': {
-                        'arrayType': {
-                            'structTypes': [
+                    "name": "x",
+                    "type": {
+                        "arrayType": {
+                            "structTypes": [
                                 {
-                                    'name': 'y',
-                                    'type': {
-                                        'arrayType': {'type': 'FLOAT64'},
-                                        'type': 'ARRAY',
+                                    "name": "y",
+                                    "type": {
+                                        "arrayType": {"type": "FLOAT64"},
+                                        "type": "ARRAY",
                                     },
                                 }
                             ],
-                            'type': 'STRUCT',
+                            "type": "STRUCT",
                         },
-                        'type': 'ARRAY',
+                        "type": "ARRAY",
                     },
                 }
             ],
-            'type': 'STRUCT',
+            "type": "STRUCT",
         },
-        'parameterValue': {
-            'structValues': {
-                'x': {
-                    'arrayValues': [
+        "parameterValue": {
+            "structValues": {
+                "x": {
+                    "arrayValues": [
                         {
-                            'structValues': {
-                                'y': {
-                                    'arrayValues': [
-                                        {'value': 1.0},
-                                        {'value': 2.0},
-                                        {'value': 3.0},
+                            "structValues": {
+                                "y": {
+                                    "arrayValues": [
+                                        {"value": 1.0},
+                                        {"value": 2.0},
+                                        {"value": 3.0},
                                     ]
                                 }
                             }
@@ -464,13 +453,13 @@ def test_repr_struct_of_array_of_struct():
 
 
 def test_raw_sql(client):
-    assert client.raw_sql('SELECT 1').fetchall() == [(1,)]
+    assert client.raw_sql("SELECT 1").fetchall() == [(1,)]
 
 
 def test_scalar_param_scope(alltypes, project_id):
     t = alltypes
-    param = ibis.param('timestamp')
-    mut = t.mutate(param=param).compile(params={param: '2017-01-01'})
+    param = ibis.param("timestamp")
+    mut = t.mutate(param=param).compile(params={param: "2017-01-01"})
     assert (
         mut
         == """\
@@ -482,42 +471,42 @@ FROM `{}.testing.functional_alltypes`""".format(
 
 
 def test_parted_column_rename(parted_alltypes):
-    assert 'PARTITIONTIME' in parted_alltypes.columns
-    assert '_PARTITIONTIME' in parted_alltypes.op().table.columns
+    assert "PARTITIONTIME" in parted_alltypes.columns
+    assert "_PARTITIONTIME" in parted_alltypes.op().table.columns
 
 
 def test_scalar_param_partition_time(parted_alltypes):
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
-    assert 'PARTITIONTIME' in parted_alltypes.columns
-    assert 'PARTITIONTIME' in parted_alltypes.schema()
-    param = ibis.param('timestamp').name('time_param')
+    assert "PARTITIONTIME" in parted_alltypes.columns
+    assert "PARTITIONTIME" in parted_alltypes.schema()
+    param = ibis.param("timestamp").name("time_param")
     expr = parted_alltypes[parted_alltypes.PARTITIONTIME < param]
-    df = expr.execute(params={param: '2017-01-01'})
+    df = expr.execute(params={param: "2017-01-01"})
     assert df.empty
 
 
 def test_exists_table(client):
-    assert client.exists_table('functional_alltypes')
-    assert not client.exists_table('footable')
+    assert client.exists_table("functional_alltypes")
+    assert not client.exists_table("footable")
 
 
 def test_exists_database(client):
-    assert client.exists_database('testing')
-    assert not client.exists_database('foodataset')
+    assert client.exists_database("testing")
+    assert not client.exists_database("foodataset")
 
 
-@pytest.mark.parametrize('kind', ['date', 'timestamp'])
+@pytest.mark.parametrize("kind", ["date", "timestamp"])
 def test_parted_column(client, kind):
-    table_name = '{}_column_parted'.format(kind)
+    table_name = "{}_column_parted".format(kind)
     t = client.table(table_name)
-    expected_column = 'my_{}_parted_col'.format(kind)
-    assert t.columns == [expected_column, 'string_col', 'int_col']
+    expected_column = "my_{}_parted_col".format(kind)
+    assert t.columns == [expected_column, "string_col", "int_col"]
 
 
 def test_cross_project_query(public):
-    table = public.table('posts_questions')
-    expr = table[table.tags.contains('ibis')][['title', 'tags']]
+    table = public.table("posts_questions")
+    expr = table[table.tags.contains("ibis")][["title", "tags"]]
     result = expr.compile()
     expected = """\
 SELECT `title`, `tags`
@@ -530,36 +519,36 @@ FROM (
     n = 5
     df = expr.limit(n).execute()
     assert len(df) == n
-    assert list(df.columns) == ['title', 'tags']
+    assert list(df.columns) == ["title", "tags"]
     assert df.title.dtype == np.object
     assert df.tags.dtype == np.object
 
 
 def test_set_database(client2):
-    client2.set_database('bigquery-public-data.epa_historical_air_quality')
+    client2.set_database("bigquery-public-data.epa_historical_air_quality")
     tables = client2.list_tables()
-    assert 'co_daily_summary' in tables
+    assert "co_daily_summary" in tables
 
 
 def test_exists_table_different_project(client):
-    name = 'co_daily_summary'
-    database = 'bigquery-public-data.epa_historical_air_quality'
+    name = "co_daily_summary"
+    database = "bigquery-public-data.epa_historical_air_quality"
     assert client.exists_table(name, database=database)
-    assert not client.exists_table('foobar', database=database)
+    assert not client.exists_table("foobar", database=database)
 
 
 def test_exists_table_different_project_fully_qualified(client):
     # TODO(phillipc): Should we raise instead?
-    name = 'bigquery-public-data.epa_historical_air_quality.co_daily_summary'
+    name = "bigquery-public-data.epa_historical_air_quality.co_daily_summary"
     with pytest.raises(exceptions.BadRequest):
         client.exists_table(name)
 
 
 @pytest.mark.parametrize(
-    ('name', 'expected'),
+    ("name", "expected"),
     [
-        ('bigquery-public-data.epa_historical_air_quality', True),
-        ('bigquery-foo-bar-project.baz_dataset', False),
+        ("bigquery-public-data.epa_historical_air_quality", True),
+        ("bigquery-foo-bar-project.baz_dataset", False),
     ],
 )
 def test_exists_database_different_project(client, name, expected):
@@ -567,10 +556,8 @@ def test_exists_database_different_project(client, name, expected):
 
 
 def test_multiple_project_queries(client):
-    so = client.table(
-        'posts_questions', database='bigquery-public-data.stackoverflow'
-    )
-    trips = client.table('trips', database='nyc-tlc.yellow')
+    so = client.table("posts_questions", database="bigquery-public-data.stackoverflow")
+    trips = client.table("trips", database="nyc-tlc.yellow")
     join = so.join(trips, so.tags == trips.rate_code)[[so.title]]
     result = join.compile()
     expected = """\
@@ -582,9 +569,9 @@ FROM `bigquery-public-data.stackoverflow.posts_questions` t0
 
 
 def test_multiple_project_queries_database_api(client):
-    stackoverflow = client.database('bigquery-public-data.stackoverflow')
+    stackoverflow = client.database("bigquery-public-data.stackoverflow")
     posts_questions = stackoverflow.posts_questions
-    yellow = client.database('nyc-tlc.yellow')
+    yellow = client.database("nyc-tlc.yellow")
     trips = yellow.trips
     predicate = posts_questions.tags == trips.rate_code
     join = posts_questions.join(trips, predicate)[[posts_questions.title]]
@@ -598,53 +585,52 @@ FROM `bigquery-public-data.stackoverflow.posts_questions` t0
 
 
 def test_multiple_project_queries_execute(client):
-    stackoverflow = client.database('bigquery-public-data.stackoverflow')
+    stackoverflow = client.database("bigquery-public-data.stackoverflow")
     posts_questions = stackoverflow.posts_questions.limit(5)
-    yellow = client.database('nyc-tlc.yellow')
+    yellow = client.database("nyc-tlc.yellow")
     trips = yellow.trips.limit(5)
     predicate = posts_questions.tags == trips.rate_code
     cols = [posts_questions.title]
     join = posts_questions.left_join(trips, predicate)[cols]
     result = join.execute()
-    assert list(result.columns) == ['title']
+    assert list(result.columns) == ["title"]
     assert len(result) == 5
 
 
 def test_large_timestamp(client):
     huge_timestamp = datetime.datetime(year=4567, month=1, day=1)
-    expr = ibis.timestamp('4567-01-01 00:00:00')
+    expr = ibis.timestamp("4567-01-01 00:00:00")
     result = client.execute(expr)
     assert result == huge_timestamp
 
 
 def test_string_to_timestamp(client):
     timestamp = pd.Timestamp(
-        datetime.datetime(year=2017, month=2, day=6), tz=pytz.timezone('UTC')
+        datetime.datetime(year=2017, month=2, day=6), tz=pytz.timezone("UTC")
     )
-    expr = ibis.literal('2017-02-06').to_timestamp('%F')
+    expr = ibis.literal("2017-02-06").to_timestamp("%F")
     result = client.execute(expr)
     assert result == timestamp
 
     timestamp_tz = pd.Timestamp(
-        datetime.datetime(year=2017, month=2, day=6, hour=5),
-        tz=pytz.timezone('UTC'),
+        datetime.datetime(year=2017, month=2, day=6, hour=5), tz=pytz.timezone("UTC"),
     )
-    expr_tz = ibis.literal('2017-02-06').to_timestamp('%F', 'America/New_York')
+    expr_tz = ibis.literal("2017-02-06").to_timestamp("%F", "America/New_York")
     result_tz = client.execute(expr_tz)
     assert result_tz == timestamp_tz
 
 
 def test_client_sql_query(client):
-    expr = client.sql('select * from testing.functional_alltypes limit 20')
+    expr = client.sql("select * from testing.functional_alltypes limit 20")
     result = expr.execute()
-    expected = client.table('functional_alltypes').head(20).execute()
+    expected = client.table("functional_alltypes").head(20).execute()
     tm.assert_frame_equal(result, expected)
 
 
 def test_timestamp_column_parted_is_not_renamed(client):
-    t = client.table('timestamp_column_parted')
-    assert '_PARTITIONTIME' not in t.columns
-    assert 'PARTITIONTIME' not in t.columns
+    t = client.table("timestamp_column_parted")
+    assert "_PARTITIONTIME" not in t.columns
+    assert "PARTITIONTIME" not in t.columns
 
 
 def test_prevent_rewrite(alltypes, project_id):
@@ -653,7 +639,7 @@ def test_prevent_rewrite(alltypes, project_id):
         t.groupby(t.string_col)
         .aggregate(collected_double=t.double_col.collect())
         .pipe(ibis.prevent_rewrite)
-        .filter(lambda t: t.string_col != 'wat')
+        .filter(lambda t: t.string_col != "wat")
     )
     result = expr.compile()
     expected = """\
@@ -670,14 +656,14 @@ WHERE `string_col` != 'wat'""".format(
 
 
 @pytest.mark.parametrize(
-    ('case', 'dtype'),
+    ("case", "dtype"),
     [
         (datetime.date(2017, 1, 1), dt.date),
-        (pd.Timestamp('2017-01-01'), dt.date),
-        ('2017-01-01', dt.date),
+        (pd.Timestamp("2017-01-01"), dt.date),
+        ("2017-01-01", dt.date),
         (datetime.datetime(2017, 1, 1, 4, 55, 59), dt.timestamp),
-        ('2017-01-01 04:55:59', dt.timestamp),
-        (pd.Timestamp('2017-01-01 04:55:59'), dt.timestamp),
+        ("2017-01-01 04:55:59", dt.timestamp),
+        (pd.Timestamp("2017-01-01 04:55:59"), dt.timestamp),
     ],
 )
 def test_day_of_week(client, case, dtype):
@@ -688,7 +674,7 @@ def test_day_of_week(client, case, dtype):
 
     expr_name = date_var.day_of_week.full_name()
     result = client.execute(expr_name)
-    assert result == 'Sunday'
+    assert result == "Sunday"
 
 
 def test_boolean_reducers(alltypes):
@@ -709,7 +695,7 @@ def test_column_summary(alltypes):
 
 def test_numeric_table_schema(numeric_table):
     assert numeric_table.schema() == ibis.schema(
-        [('string_col', dt.string), ('numeric_col', dt.Decimal(38, 9))]
+        [("string_col", dt.string), ("numeric_col", dt.Decimal(38, 9))]
     )
 
 
@@ -725,9 +711,9 @@ def test_numeric_sum(numeric_table):
 
 def test_boolean_casting(alltypes):
     t = alltypes
-    expr = t.groupby(k=t.string_col.nullif('1') == '9').count()
-    result = expr.execute().set_index('k')
-    count = result['count']
+    expr = t.groupby(k=t.string_col.nullif("1") == "9").count()
+    result = expr.execute().set_index("k")
+    count = result["count"]
     assert count.loc[False] == 5840
     assert count.loc[True] == 730
     assert count.loc[None] == 730

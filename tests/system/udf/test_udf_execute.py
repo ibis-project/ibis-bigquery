@@ -10,20 +10,20 @@ from pytest import param
 import ibis_bigquery
 from ibis_bigquery import udf  # noqa: E402
 
-PROJECT_ID = os.environ.get('GOOGLE_BIGQUERY_PROJECT_ID', 'ibis-gbq')
-DATASET_ID = 'testing'
+PROJECT_ID = os.environ.get("GOOGLE_BIGQUERY_PROJECT_ID", "ibis-gbq")
+DATASET_ID = "testing"
 
 bq_backend = ibis_bigquery.Backend()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def alltypes(client):
-    t = client.table('functional_alltypes')
+    t = client.table("functional_alltypes")
     expr = t[t.bigint_col.isin([10, 20])].limit(10)
     return expr
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def df(alltypes):
     return alltypes.execute()
 
@@ -37,10 +37,9 @@ def test_udf(client, alltypes, df):
     result = expr.execute()
     assert not result.empty
 
-    expected = (df.double_col + df.double_col).rename('tmp')
+    expected = (df.double_col + df.double_col).rename("tmp")
     tm.assert_series_equal(
-        result.value_counts().sort_index(),
-        expected.value_counts().sort_index(),
+        result.value_counts().sort_index(), expected.value_counts().sort_index(),
     )
 
 
@@ -48,7 +47,7 @@ def test_udf_with_struct(client, alltypes, df):
     @udf(
         input_type=[dt.double, dt.double],
         output_type=dt.Struct.from_tuples(
-            [('width', dt.double), ('height', dt.double)]
+            [("width", dt.double), ("height", dt.double)]
         ),
     )
     def my_struct_thing(a, b):
@@ -83,9 +82,7 @@ return my_struct_thing(a, b);
     result = expr.execute()
     assert not result.empty
 
-    expected = pd.Series(
-        [{'width': c, 'height': c} for c in df.double_col], name='tmp'
-    )
+    expected = pd.Series([{"width": c, "height": c} for c in df.double_col], name="tmp")
     tm.assert_series_equal(result, expected)
 
 
@@ -101,7 +98,7 @@ def test_udf_compose(client, alltypes, df):
     t = alltypes
     expr = times_two(add_one(t.double_col))
     result = expr.execute()
-    expected = ((df.double_col + 1.0) * 2.0).rename('tmp')
+    expected = ((df.double_col + 1.0) * 2.0).rename("tmp")
     tm.assert_series_equal(result, expected)
 
 
@@ -120,7 +117,7 @@ def test_multiple_calls_has_one_definition(client):
     def my_str_len(s):
         return s.length
 
-    s = ibis.literal('abcd')
+    s = ibis.literal("abcd")
     expr = my_str_len(s) + my_str_len(s)
     sql = client.compile(expr)
     expected = '''\
@@ -146,12 +143,12 @@ def test_udf_libraries(client):
         dt.double,
         # whatever symbols are exported in the library are visible inside the
         # UDF, in this case lodash defines _ and we use that here
-        libraries=['gs://ibis-testing-libraries/lodash.min.js'],
+        libraries=["gs://ibis-testing-libraries/lodash.min.js"],
     )
     def string_length(strings):
         return _.sum(_.map(strings, lambda x: x.length))  # noqa: F821
 
-    raw_data = ['aaa', 'bb', 'c']
+    raw_data = ["aaa", "bb", "c"]
     data = ibis.literal(raw_data)
     expr = string_length(data)
     result = client.execute(expr)
@@ -168,8 +165,8 @@ def test_udf_with_len(client):
     def my_array_len(x):
         return len(x)
 
-    assert client.execute(my_str_len('aaa')) == 3
-    assert client.execute(my_array_len(['aaa', 'bb'])) == 2
+    assert client.execute(my_str_len("aaa")) == 3
+    assert client.execute(my_array_len(["aaa", "bb"])) == 2
 
 
 def test_multiple_calls_redefinition(client):
@@ -177,7 +174,7 @@ def test_multiple_calls_redefinition(client):
     def my_len(s):
         return s.length
 
-    s = ibis.literal('abcd')
+    s = ibis.literal("abcd")
     expr = my_len(s) + my_len(s)
 
     @udf([dt.string], dt.double)
@@ -213,21 +210,17 @@ SELECT (my_len_0('abcd') + my_len_0('abcd')) + my_len_1('abcd') AS `tmp`'''
 
 
 @pytest.mark.parametrize(
-    ('argument_type', 'return_type'),
+    ("argument_type", "return_type"),
     [
         param(dt.int64, dt.float64, marks=pytest.mark.xfail(raises=TypeError)),
         param(dt.float64, dt.int64, marks=pytest.mark.xfail(raises=TypeError)),
         # complex argument type, valid return type
         param(
-            dt.Array(dt.int64),
-            dt.float64,
-            marks=pytest.mark.xfail(raises=TypeError),
+            dt.Array(dt.int64), dt.float64, marks=pytest.mark.xfail(raises=TypeError),
         ),
         # valid argument type, complex invalid return type
         param(
-            dt.float64,
-            dt.Array(dt.int64),
-            marks=pytest.mark.xfail(raises=TypeError),
+            dt.float64, dt.Array(dt.int64), marks=pytest.mark.xfail(raises=TypeError),
         ),
         # both invalid
         param(
@@ -237,7 +230,7 @@ SELECT (my_len_0('abcd') + my_len_0('abcd')) + my_len_1('abcd') AS `tmp`'''
         ),
         # struct type with nested integer, valid return type
         param(
-            dt.Struct.from_tuples([('x', dt.Array(dt.int64))]),
+            dt.Struct.from_tuples([("x", dt.Array(dt.int64))]),
             dt.float64,
             marks=pytest.mark.xfail(raises=TypeError),
         ),

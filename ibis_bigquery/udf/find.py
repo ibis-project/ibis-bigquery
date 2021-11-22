@@ -11,9 +11,9 @@ class NameFinder:
 
     def find(self, node):
         typename = type(node).__name__
-        method = getattr(self, 'find_{}'.format(typename), None)
+        method = getattr(self, "find_{}".format(typename), None)
         if method is None:
-            fields = getattr(node, '_fields', None)
+            fields = getattr(node, "_fields", None)
             if fields is None:
                 return
             for field in fields:
@@ -35,10 +35,8 @@ class NameFinder:
         if not isinstance(node.func, ast.Name):
             fields = node._fields
         else:
-            fields = [field for field in node._fields if field != 'func']
-        return toolz.concat(
-            map(self.find, (getattr(node, field) for field in fields))
-        )
+            fields = [field for field in node._fields if field != "func"]
+        return toolz.concat(map(self.find, (getattr(node, field) for field in fields)))
 
 
 def find_names(node):

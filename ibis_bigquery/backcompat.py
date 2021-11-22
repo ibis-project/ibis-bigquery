@@ -15,7 +15,7 @@ except ImportError:
     # 1.2
     from ibis.common import TranslationError
 
-__all__ = ('BaseBackend',)
+__all__ = ("BaseBackend",)
 
 
 class BaseBackend(abc.ABC):
@@ -71,18 +71,18 @@ class BaseBackend(abc.ABC):
         # want to create subclasses for each of the kinds
         # (e.g. `BaseSQLAlchemyBackend`)
         # TODO check if the below dialects can be merged into a single one
-        if self.kind == 'sqlalchemy':
+        if self.kind == "sqlalchemy":
             from ibis.backends.base_sqlalchemy.alchemy import AlchemyDialect
 
             dialect_class = AlchemyDialect
-        elif self.kind in ('sql', 'pandas'):
+        elif self.kind in ("sql", "pandas"):
             try:
                 from ibis.backends.base_sqlalchemy.compiler import Dialect
             except ImportError:
                 from ibis.sql.compiler import Dialect
 
             dialect_class = Dialect
-        elif self.kind == 'spark':
+        elif self.kind == "spark":
             from ibis.backends.base_sql.compiler import BaseDialect
 
             dialect_class = BaseDialect

@@ -25,7 +25,7 @@ def eq(left, right):
     if not isinstance(left, ast.AST) and not isinstance(right, ast.AST):
         return left == right
 
-    assert hasattr(left, '_fields') and hasattr(right, '_fields')
+    assert hasattr(left, "_fields") and hasattr(right, "_fields")
     return left._fields == right._fields and all(
         eq(getattr(left, left_name), getattr(right, right_name))
         for left_name, right_name in zip(left._fields, right._fields)
@@ -41,44 +41,42 @@ def store(id):
 
 
 def test_find_BinOp():
-    expr = parse_expr('a + 1')
+    expr = parse_expr("a + 1")
     found = find_names(expr)
     assert len(found) == 1
-    assert eq(found[0], var('a'))
+    assert eq(found[0], var("a"))
 
 
 def test_find_dup_names():
-    expr = parse_expr('a + 1 * a')
+    expr = parse_expr("a + 1 * a")
     found = find_names(expr)
     assert len(found) == 1
-    assert eq(found[0], var('a'))
+    assert eq(found[0], var("a"))
 
 
 def test_find_Name():
-    expr = parse_expr('b')
+    expr = parse_expr("b")
     found = find_names(expr)
     assert len(found) == 1
-    assert eq(found[0], var('b'))
+    assert eq(found[0], var("b"))
 
 
 def test_find_Tuple():
-    expr = parse_expr('(a, (b, 1), (((c,),),))')
+    expr = parse_expr("(a, (b, 1), (((c,),),))")
     found = find_names(expr)
     assert len(found) == 3
-    assert eq(found, [var('a'), var('b'), var('c')])
+    assert eq(found, [var("a"), var("b"), var("c")])
 
 
 def test_find_Compare():
-    expr = parse_expr('a < b < c == e + (f, (gh,))')
+    expr = parse_expr("a < b < c == e + (f, (gh,))")
     found = find_names(expr)
     assert len(found) == 6
-    assert eq(
-        found, [var('a'), var('b'), var('c'), var('e'), var('f'), var('gh')]
-    )
+    assert eq(found, [var("a"), var("b"), var("c"), var("e"), var("f"), var("gh")])
 
 
 def test_find_ListComp():
-    expr = parse_expr('[i for i in range(n) if i < 2]')
+    expr = parse_expr("[i for i in range(n) if i < 2]")
     found = find_names(expr)
     assert all(isinstance(f, ast.Name) for f in found)
-    assert eq(found, [var('i'), store('i'), var('n')])
+    assert eq(found, [var("i"), store("i"), var("n")])
