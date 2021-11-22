@@ -9,6 +9,7 @@ from pydata_google_auth import cache
 
 from ibis.backends.base import BaseBackend
 import ibis.expr.schema as sch
+from ibis.expr.typing import TimeContext
 
 from . import version as ibis_bigquery_version
 from .client import (
@@ -222,6 +223,25 @@ class Backend(BaseBackend):
     @property
     def current_database(self):
         return self.database(self.dataset)
+
+    def compile(
+        self,
+        expr,
+        limit=None,
+        params=None,
+        timecontext: Optional[TimeContext] = None,
+    ):
+        """Translate expression.
+        Translate expression to one or more queries according to
+        backend target.
+        Returns
+        -------
+        output : single query or list of queries
+        """
+        return self.compiler.to_ast_ensure_limit(
+            expr, limit, params=params
+        ).compile()
+
 
     def database(self, name=None):
         if name is None and self.dataset is None:
