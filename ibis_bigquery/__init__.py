@@ -177,9 +177,7 @@ class Backend(BaseSQLBackend):
 
     def table(self, name, database=None) -> ir.TableExpr:
         t = super().table(name, database=database)
-        project, dataset, name = t.op().name.split(".")
-        dataset_ref = self.client.dataset(dataset, project=project)
-        table_ref = dataset_ref.table(name)
+        table_ref = bq.TableReference.from_string(name, default_project=self.data_project)
         bq_table = self.client.get_table(table_ref)
         return rename_partitioned_column(t, bq_table, self.partition_column)
 
