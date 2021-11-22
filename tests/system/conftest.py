@@ -10,7 +10,7 @@ import ibis_bigquery
 
 DEFAULT_PROJECT_ID = "ibis-gbq"
 PROJECT_ID_ENV_VAR = "GOOGLE_BIGQUERY_PROJECT_ID"
-DATASET_ID = "testing"
+DATASET_ID = "ibis_gbq_testing"
 
 bq = ibis_bigquery.Backend()
 
