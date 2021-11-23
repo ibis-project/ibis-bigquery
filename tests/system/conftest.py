@@ -25,8 +25,8 @@ bq = ibis_bigquery.Backend()
 def pytest_addoption(parser):
     parser.addoption('--save-dataset', action='store_true', default=False,
                      help='saves all test data in the testing dataset')
-    parser.addoption('--refresh-dataset', action='store_true', default=False,
-                     help='refreshes the test data in the testing dataset')
+    parser.addoption('--no-refresh-dataset', action='store_true', default=False,
+                     help='do not refresh the test data in the testing dataset')
 
 
 @pytest.fixture(scope="session")
@@ -166,7 +166,7 @@ def create_functional_alltypes_table(bqclient, functional_alltypes_table):
 
 @pytest.fixture(autouse=True, scope='session')
 def load_functional_alltypes_data(request, bqclient, create_functional_alltypes_table):
-    if not request.config.getoption("--refresh-dataset"):
+    if request.config.getoption("--no-refresh-dataset"):
         return
 
     table = create_functional_alltypes_table
@@ -224,7 +224,7 @@ def create_functional_alltypes_parted_table(
 @pytest.fixture(autouse=True, scope='session')
 def load_functional_alltypes_parted_data(
         request, bqclient, create_functional_alltypes_parted_table):
-    if not request.config.getoption("--refresh-dataset"):
+    if request.config.getoption("--no-refresh-dataset"):
         return
 
     table = create_functional_alltypes_parted_table
@@ -251,7 +251,7 @@ def struct_bq_table(testing_dataset):
 
 @pytest.fixture(autouse=True, scope='session')
 def load_struct_table_data(request, bqclient, struct_bq_table):
-    if not request.config.getoption("--refresh-dataset"):
+    if request.config.getoption("--no-refresh-dataset"):
         return
 
     load_config = bigquery.LoadJobConfig()
@@ -329,7 +329,7 @@ def create_numeric_table(bqclient, numeric_bq_table):
 
 @pytest.fixture(autouse=True, scope='session')
 def load_numeric_data(request, bqclient, create_numeric_table):
-    if not request.config.getoption("--refresh-dataset"):
+    if request.config.getoption("--no-refresh-dataset"):
         return
 
     load_config = bigquery.LoadJobConfig()
