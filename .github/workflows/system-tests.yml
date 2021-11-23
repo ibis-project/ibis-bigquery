@@ -2,7 +2,8 @@ name: System Tests
 
 on:
   push:
-    branches: main
+    branches:
+      - v1
   schedule:
     - cron: 0 2 * * *
 
