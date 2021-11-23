@@ -8,12 +8,14 @@ import ibis  # noqa: F401
 import pytest
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
-from google.oauth2 import service_account
+import google.auth
+import google.auth.exceptions
 
 import ibis_bigquery
 
-PROJECT_ID = os.environ.get('GOOGLE_BIGQUERY_PROJECT_ID', 'ibis-gbq')
-DATASET_ID = 'ibis_gbq_testing'
+DEFAULT_PROJECT_ID = "ibis-gbq"
+PROJECT_ID_ENV_VAR = "GOOGLE_BIGQUERY_PROJECT_ID"
+DATASET_ID = "ibis_gbq_testing"
 TESTING_DATA_URI = (
     'https://raw.githubusercontent.com/ibis-project/testing-data/master')
 
@@ -23,37 +25,38 @@ bq = ibis_bigquery.Backend()
 def pytest_addoption(parser):
     parser.addoption('--save-dataset', action='store_true', default=False,
                      help='saves all test data in the testing dataset')
-
-
-def _credentials():
-    google_application_credentials = os.environ.get(
-        "GOOGLE_APPLICATION_CREDENTIALS", None
-    )
-    if google_application_credentials is None:
-        pytest.skip(
-            "Environment variable GOOGLE_APPLICATION_CREDENTIALS is " "not defined"
-        )
-    elif not google_application_credentials:
-        pytest.skip("Environment variable GOOGLE_APPLICATION_CREDENTIALS is empty")
-    elif not os.path.exists(google_application_credentials):
-        pytest.skip(
-            "Environment variable GOOGLE_APPLICATION_CREDENTIALS points "
-            "to {}, which does not exist".format(google_application_credentials)
-        )
-
-    return service_account.Credentials.from_service_account_file(
-        google_application_credentials
-    )
+    parser.addoption('--refresh-dataset', action='store_true', default=False,
+                     help='refreshes the test data in the testing dataset')
 
 
 @pytest.fixture(scope="session")
-def project_id():
-    return PROJECT_ID
+def dataset_id() -> str:
+    return DATASET_ID   
+
+@pytest.fixture(scope="session")
+def default_credentials():
+    try:
+        credentials, project_id = google.auth.default(scopes=ibis_bigquery.EXTERNAL_DATA_SCOPES)
+    except google.auth.excecptions.DefaultCredentialsError as exc:
+        pytest.skip(f"Could not get GCP credentials: {exc}")
+
+    return credentials, project_id
 
 
 @pytest.fixture(scope="session")
-def credentials():
-    return _credentials()
+def project_id(default_credentials):
+    project_id = os.getenv(PROJECT_ID_ENV_VAR)
+    if project_id is None:
+        _, project_id = default_credentials
+    if project_id is None:
+        project_id = DEFAULT_PROJECT_ID
+    return project_id
+
+
+@pytest.fixture(scope="session")
+def credentials(default_credentials):
+    credentials, _ = default_credentials
+    return credentials
 
 
 @pytest.fixture(scope="session")
@@ -119,8 +122,8 @@ def bqclient(client):
 
 # Create testing dataset.
 @pytest.fixture(autouse=True, scope='session')
-def testing_dataset(bqclient, request):
-    dataset_ref = bigquery.DatasetReference(bqclient.project, DATASET_ID)
+def testing_dataset(bqclient, request, dataset_id):
+    dataset_ref = bigquery.DatasetReference(bqclient.project, dataset_id)
     try:
         bqclient.create_dataset(dataset_ref, exists_ok=True)
     except NotFound:
@@ -162,7 +165,10 @@ def create_functional_alltypes_table(bqclient, functional_alltypes_table):
 
 
 @pytest.fixture(autouse=True, scope='session')
-def load_functional_alltypes_data(bqclient, create_functional_alltypes_table):
+def load_functional_alltypes_data(request, bqclient, create_functional_alltypes_table):
+    if not request.config.getoption("--refresh-dataset"):
+        return
+
     table = create_functional_alltypes_table
     load_config = bigquery.LoadJobConfig()
     load_config.skip_leading_rows = 1  # skip the header row.
@@ -217,7 +223,10 @@ def create_functional_alltypes_parted_table(
 
 @pytest.fixture(autouse=True, scope='session')
 def load_functional_alltypes_parted_data(
-        bqclient, create_functional_alltypes_parted_table):
+        request, bqclient, create_functional_alltypes_parted_table):
+    if not request.config.getoption("--refresh-dataset"):
+        return
+
     table = create_functional_alltypes_parted_table
     load_config = bigquery.LoadJobConfig()
     load_config.write_disposition = 'WRITE_TRUNCATE'
@@ -241,7 +250,10 @@ def struct_bq_table(testing_dataset):
 
 
 @pytest.fixture(autouse=True, scope='session')
-def load_struct_table_data(bqclient, struct_bq_table):
+def load_struct_table_data(request, bqclient, struct_bq_table):
+    if not request.config.getoption("--refresh-dataset"):
+        return
+
     load_config = bigquery.LoadJobConfig()
     load_config.write_disposition = 'WRITE_TRUNCATE'
     load_config.source_format = 'AVRO'
@@ -316,7 +328,10 @@ def create_numeric_table(bqclient, numeric_bq_table):
 
 
 @pytest.fixture(autouse=True, scope='session')
-def load_numeric_data(bqclient, create_numeric_table):
+def load_numeric_data(request, bqclient, create_numeric_table):
+    if not request.config.getoption("--refresh-dataset"):
+        return
+
     load_config = bigquery.LoadJobConfig()
     load_config.write_disposition = 'WRITE_TRUNCATE'
     load_config.source_format = 'NEWLINE_DELIMITED_JSON'

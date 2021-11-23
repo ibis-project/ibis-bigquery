@@ -1,6 +1,7 @@
 import collections
 import datetime
 import decimal
+from google.cloud.bigquery import dataset
 
 import ibis
 import ibis.expr.datatypes as dt
@@ -57,8 +58,8 @@ def test_list_tables(client):
     assert set(tables) == {"functional_alltypes", "functional_alltypes_parted"}
 
 
-def test_current_database(client):
-    assert client.current_database.name == "testing"
+def test_current_database(client, dataset_id):
+    assert client.current_database.name == dataset_id
     assert client.current_database.name == client.dataset_id
     assert client.current_database.tables == client.list_tables()
 
@@ -203,7 +204,7 @@ def test_different_partition_col_name(monkeypatch, client):
     assert col in parted_alltypes.columns
 
 
-def test_subquery_scalar_params(alltypes, project_id):
+def test_subquery_scalar_params(alltypes, project_id, dataset_id):
     t = alltypes
     param = ibis.param("timestamp").name("my_param")
     expr = (
@@ -221,12 +222,12 @@ FROM (
   SELECT `string_col`, sum(`float_col`) AS `foo`
   FROM (
     SELECT `float_col`, `timestamp_col`, `int_col`, `string_col`
-    FROM `{}.testing.functional_alltypes`
+    FROM `{}.{}.functional_alltypes`
     WHERE `timestamp_col` < @my_param
   ) t1
   GROUP BY 1
 ) t0""".format(
-        project_id
+        project_id, dataset_id
     )
     assert result == expected
 
@@ -456,7 +457,7 @@ def test_raw_sql(client):
     assert client.raw_sql("SELECT 1").fetchall() == [(1,)]
 
 
-def test_scalar_param_scope(alltypes, project_id):
+def test_scalar_param_scope(alltypes, project_id, dataset_id):
     t = alltypes
     param = ibis.param("timestamp")
     mut = t.mutate(param=param).compile(params={param: "2017-01-01"})
@@ -464,8 +465,8 @@ def test_scalar_param_scope(alltypes, project_id):
         mut
         == """\
 SELECT *, @param AS `param`
-FROM `{}.testing.functional_alltypes`""".format(
-            project_id
+FROM `{}.{}.functional_alltypes`""".format(
+            project_id, dataset_id
         )
     )
 
@@ -491,8 +492,8 @@ def test_exists_table(client):
     assert not client.exists_table("footable")
 
 
-def test_exists_database(client):
-    assert client.exists_database("testing")
+def test_exists_database(client, dataset_id):
+    assert client.exists_database(dataset_id)
     assert not client.exists_database("foodataset")
 
 
@@ -620,8 +621,8 @@ def test_string_to_timestamp(client):
     assert result_tz == timestamp_tz
 
 
-def test_client_sql_query(client):
-    expr = client.sql("select * from testing.functional_alltypes limit 20")
+def test_client_sql_query(client, dataset_id):
+    expr = client.sql(f"select * from {dataset_id}.functional_alltypes limit 20")
     result = expr.execute()
     expected = client.table("functional_alltypes").head(20).execute()
     tm.assert_frame_equal(result, expected)
@@ -633,7 +634,7 @@ def test_timestamp_column_parted_is_not_renamed(client):
     assert "PARTITIONTIME" not in t.columns
 
 
-def test_prevent_rewrite(alltypes, project_id):
+def test_prevent_rewrite(alltypes, project_id, dataset_id):
     t = alltypes
     expr = (
         t.groupby(t.string_col)
@@ -646,11 +647,11 @@ def test_prevent_rewrite(alltypes, project_id):
 SELECT *
 FROM (
   SELECT `string_col`, ARRAY_AGG(`double_col`) AS `collected_double`
-  FROM `{}.testing.functional_alltypes`
+  FROM `{}.{}.functional_alltypes`
   GROUP BY 1
 ) t0
 WHERE `string_col` != 'wat'""".format(
-        project_id
+        project_id, dataset_id
     )
     assert result == expected
 
@@ -704,7 +705,6 @@ def test_numeric_sum(numeric_table):
     expr = t.numeric_col.sum()
     result = expr.execute()
     assert isinstance(result, decimal.Decimal)
-    print(result)
     compare = result.compare(decimal.Decimal('1.000000001'))
     assert compare == decimal.Decimal('0')
 
@@ -714,9 +714,9 @@ def test_boolean_casting(alltypes):
     expr = t.groupby(k=t.string_col.nullif("1") == "9").count()
     result = expr.execute().set_index("k")
     count = result["count"]
-    assert count.loc[False] == 5840
-    assert count.loc[True] == 730
-    assert count.loc[None] == 730
+    assert count.at[False] == 5840
+    assert count.at[True] == 730
+    assert count.at[None] == 730
 
 
 def test_approx_median(alltypes):

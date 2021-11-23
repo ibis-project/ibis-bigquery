@@ -1,4 +1,4 @@
-name: ibis-bigquery-dev
+name: ibis-v1-bigquery-dev
 channels:
 - conda-forge
 dependencies:
@@ -7,6 +7,7 @@ dependencies:
 - ibis-framework <=2.0.0dev
 - google-cloud-bigquery-core >=1.12.0,<3.0.0dev
 - pydata-google-auth
+- sqlalchemy=1.3.23
 
 # dev
 - black=19.10b0 # Same as ibis
