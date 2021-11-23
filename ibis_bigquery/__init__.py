@@ -166,6 +166,14 @@ class Backend(BaseSQLBackend):
             dataset or "{}.{}".format(self.data_project, self.dataset),
         )
         return project, dataset
+    
+    def _resolve_dataset_name(self, dataset):
+        """Given relative or fully-qualified dataset ID, produce fully-qualified dataset ID."""
+        raise NotImplementedError()
+    
+    def _resolve_table_name(self, name, dataset=None):
+        """Given relative or fully-qualified table ID, produce fully-qualified table ID."""
+        raise NotImplementedError()
 
     @property
     def project_id(self):
@@ -248,7 +256,7 @@ class Backend(BaseSQLBackend):
 
     def get_schema(self, name, database=None):
         project, dataset = self._parse_project_and_dataset(database)
-        table_ref = self.client.dataset(dataset, project=project).table(name)
+        table_ref = bq.TableReference.from_string(f"{project}.{dataset}.{name}")
         bq_table = self.client.get_table(table_ref)
         return sch.infer(bq_table)
 
