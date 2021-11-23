@@ -12,7 +12,6 @@ import pandas.testing as tm
 import pytest
 import pytz
 from google.api_core import exceptions
-from google.cloud.bigquery import dataset
 
 import ibis_bigquery
 from ibis_bigquery.client import bigquery_param
