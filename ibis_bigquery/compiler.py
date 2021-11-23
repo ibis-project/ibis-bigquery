@@ -210,7 +210,7 @@ def _string_substring(translator, expr):
         raise ValueError("Length parameter should not be a negative value.")
 
     base_substring = operation_registry[ops.Substring]
-    base_substring(translator, expr)
+    return base_substring(translator, expr)
 
 
 def _array_literal_format(expr):

@@ -246,6 +246,17 @@ FROM t"""
 
 def test_substring():
     t = ibis.table([("value", "string")], name="t")
+    expr = t["value"].substr(3, 1)
+    expected = """\
+SELECT substr(`value`, 3 + 1, 1) AS `tmp`
+FROM t"""
+    result = ibis_bigquery.compile(expr)
+
+    assert result == expected
+
+
+def test_substring_neg_length():
+    t = ibis.table([("value", "string")], name="t")
     expr = t["value"].substr(3, -1)
     with pytest.raises(Exception) as exception_info:
         ibis_bigquery.compile(expr)
