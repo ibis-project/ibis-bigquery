@@ -254,6 +254,7 @@ FROM t"""
 
     assert result == expected
 
+
 def test_substring_neg_length():
     t = ibis.table([("value", "string")], name="t")
     expr = t["value"].substr(3, -1)

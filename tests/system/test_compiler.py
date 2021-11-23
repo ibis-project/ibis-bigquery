@@ -178,7 +178,9 @@ def test_trailing_range_window_unsupported(alltypes, preceding, value):
         (False, False, "UNION ALL", "UNION ALL"),
     ],
 )
-def test_union_cte(alltypes, distinct1, distinct2, expected1, expected2, project_id, dataset_id):
+def test_union_cte(
+    alltypes, distinct1, distinct2, expected1, expected2, project_id, dataset_id
+):
     t = alltypes
     expr1 = t.group_by(t.string_col).aggregate(metric=t.double_col.sum())
     expr2 = expr1.view()

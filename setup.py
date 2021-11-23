@@ -47,7 +47,7 @@ setuptools.setup(
         "pyarrow >=1.0.0,<5.0.0dev",
         "pydata-google-auth",
         # Workaround for ibis 1.x incompatibility with SQLAlchemy 1.4
-        # AttributeError: module 'sqlalchemy' has no attribute 'Binary'   
+        # AttributeError: module 'sqlalchemy' has no attribute 'Binary'
         "sqlalchemy <1.4.0dev",
     ],
     classifiers=[

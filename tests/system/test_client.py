@@ -1,7 +1,6 @@
 import collections
 import datetime
 import decimal
-from google.cloud.bigquery import dataset
 
 import ibis
 import ibis.expr.datatypes as dt
@@ -13,6 +12,7 @@ import pandas.testing as tm
 import pytest
 import pytz
 from google.api_core import exceptions
+from google.cloud.bigquery import dataset
 
 import ibis_bigquery
 from ibis_bigquery.client import bigquery_param
@@ -705,8 +705,8 @@ def test_numeric_sum(numeric_table):
     expr = t.numeric_col.sum()
     result = expr.execute()
     assert isinstance(result, decimal.Decimal)
-    compare = result.compare(decimal.Decimal('1.000000001'))
-    assert compare == decimal.Decimal('0')
+    compare = result.compare(decimal.Decimal("1.000000001"))
+    assert compare == decimal.Decimal("0")
 
 
 def test_boolean_casting(alltypes):
