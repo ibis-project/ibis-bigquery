@@ -170,14 +170,6 @@ class Backend(BaseSQLBackend):
         )
         return project, dataset
 
-    def _resolve_dataset_name(self, dataset):
-        """Given relative or fully-qualified dataset ID, produce fully-qualified dataset ID."""
-        raise NotImplementedError()
-
-    def _resolve_table_name(self, name, dataset=None):
-        """Given relative or fully-qualified table ID, produce fully-qualified table ID."""
-        raise NotImplementedError()
-
     @property
     def project_id(self):
         return self.data_project
@@ -188,15 +180,20 @@ class Backend(BaseSQLBackend):
 
     def table(self, name, database=None) -> ir.TableExpr:
         t = super().table(name, database=database)
-        table_ref = bq.TableReference.from_string(
-            name, default_project=self.data_project
-        )
-        bq_table = self.client.get_table(table_ref)
+        table_id = self._fully_qualified_name(name, database)
+        bq_table = self.client.get_table(table_id)
         return rename_partitioned_column(t, bq_table, self.partition_column)
 
     def _fully_qualified_name(self, name, database):
-        project, dataset = self._parse_project_and_dataset(database)
-        return "{}.{}.{}".format(project, dataset, name)
+        default_project, default_dataset = self._parse_project_and_dataset(database)
+        parts = name.split(".")
+        if len(parts) == 3:
+            return name
+        elif len(parts) == 2:
+            return "{}.{}".format(default_project, name)
+        elif len(parts) == 1:
+            return "{}.{}.{}".format(default_project, default_dataset, name)
+        raise ValueError("Got too many components in table name: {}".format(name))
 
     def _get_schema_using_query(self, limited_query):
         with self._execute(limited_query, results=True) as cur:
@@ -263,8 +260,8 @@ class Backend(BaseSQLBackend):
         return schema.apply_to(df)
 
     def get_schema(self, name, database=None):
-        project, dataset = self._parse_project_and_dataset(database)
-        table_ref = bq.TableReference.from_string(f"{project}.{dataset}.{name}")
+        table_id = self._fully_qualified_name(name, database)
+        table_ref = bq.TableReference.from_string(table_id)
         bq_table = self.client.get_table(table_ref)
         return sch.infer(bq_table)
 
