@@ -420,6 +420,7 @@ _operation_registry = {
 
 class BigQueryExprTranslator(ExprTranslator):
     """Translate expressions to strings."""
+
     _registry = _operation_registry
 
     @classmethod

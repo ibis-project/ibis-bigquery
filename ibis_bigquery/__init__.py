@@ -169,11 +169,11 @@ class Backend(BaseSQLBackend):
             dataset or "{}.{}".format(self.data_project, self.dataset),
         )
         return project, dataset
-    
+
     def _resolve_dataset_name(self, dataset):
         """Given relative or fully-qualified dataset ID, produce fully-qualified dataset ID."""
         raise NotImplementedError()
-    
+
     def _resolve_table_name(self, name, dataset=None):
         """Given relative or fully-qualified table ID, produce fully-qualified table ID."""
         raise NotImplementedError()
@@ -188,7 +188,9 @@ class Backend(BaseSQLBackend):
 
     def table(self, name, database=None) -> ir.TableExpr:
         t = super().table(name, database=database)
-        table_ref = bq.TableReference.from_string(name, default_project=self.data_project)
+        table_ref = bq.TableReference.from_string(
+            name, default_project=self.data_project
+        )
         bq_table = self.client.get_table(table_ref)
         return rename_partitioned_column(t, bq_table, self.partition_column)
 
@@ -228,6 +230,9 @@ class Backend(BaseSQLBackend):
         )
         query.result()  # blocks until finished
         return BigQueryCursor(query)
+
+    def raw_sql(self, query: str, results=False):
+        return self._execute(query, results=results)
 
     @property
     def current_database(self):

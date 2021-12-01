@@ -166,6 +166,7 @@ def _find_scalar_parameter(expr):
         result = None
     return lin.proceed, result
 
+
 class BigQueryDatabase(Database):
     """A BigQuery dataset."""
 
