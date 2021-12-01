@@ -3,20 +3,23 @@ from typing import Optional
 
 import google.auth.credentials
 import google.cloud.bigquery as bq
-from google.api_core.exceptions import NotFound
-import pydata_google_auth
-from pydata_google_auth import cache
-
-from ibis.backends.base.sql import BaseSQLBackend
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
+import pydata_google_auth
+from google.api_core.exceptions import NotFound
+from ibis.backends.base.sql import BaseSQLBackend
+from pydata_google_auth import cache
 
 from . import version as ibis_bigquery_version
 from .client import (
-    BigQueryDatabase, BigQueryTable,
-    parse_project_and_dataset, _create_client_info,
-    rename_partitioned_column, bigquery_field_to_ibis_dtype,
-    BigQueryCursor)
+    BigQueryCursor,
+    BigQueryDatabase,
+    BigQueryTable,
+    _create_client_info,
+    bigquery_field_to_ibis_dtype,
+    parse_project_and_dataset,
+    rename_partitioned_column,
+)
 from .compiler import BigQueryCompiler
 
 try:

@@ -5,7 +5,6 @@ import datetime
 from functools import partial
 
 import ibis
-
 from ibis.backends.base.sql import compiler as comp
 
 try:
@@ -20,7 +19,7 @@ import ibis.expr.types as ir
 import numpy as np
 import regex as re
 import toolz
-
+from ibis.backends.base.sql.compiler import ExprTranslator, TableSetFormatter
 from ibis.backends.base.sql.registry import (
     fixed_arity,
     literal,
@@ -28,12 +27,6 @@ from ibis.backends.base.sql.registry import (
     reduction,
     unary,
 )
-
-from ibis.backends.base.sql.compiler import (
-    ExprTranslator,
-    TableSetFormatter,
-)
-
 from multipledispatch import Dispatcher
 
 from .datatypes import ibis_type_to_bigquery_type
