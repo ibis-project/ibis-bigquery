@@ -54,7 +54,12 @@ def test_identical_to(alltypes, project_id, dataset_id):
 SELECT *
 FROM `{project_id}.{dataset_id}.functional_alltypes`
 WHERE (((`string_col` IS NULL) AND ('a' IS NULL)) OR (`string_col` = 'a')) AND (((`date_string_col` IS NULL) AND ('b' IS NULL)) OR (`date_string_col` = 'b'))"""  # noqa: E501
-    assert result == expected
+    expected_2 = f"""\
+SELECT *
+FROM `{project_id}.{dataset_id}.functional_alltypes`
+WHERE (((`string_col` IS NULL) AND ('a' IS NULL)) OR (`string_col` = 'a')) AND
+      (((`date_string_col` IS NULL) AND ('b' IS NULL)) OR (`date_string_col` = 'b'))"""  # noqa: E501
+    assert result == expected or result == expected_2
 
 
 @pytest.mark.parametrize("timezone", [None, "America/New_York"])
