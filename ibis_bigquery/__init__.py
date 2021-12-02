@@ -1,6 +1,6 @@
 """BigQuery public API."""
-from typing import Optional
 import warnings
+from typing import Optional
 
 import google.auth.credentials
 import google.cloud.bigquery as bq
