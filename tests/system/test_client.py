@@ -687,8 +687,9 @@ def test_boolean_reducers(alltypes):
 
 
 def test_column_summary(alltypes):
-    b = alltypes.bool_col.summary()
-    result = b.execute()
+    bool_col_summary = alltypes.bool_col.summary()
+    expr = alltypes.aggregate(bool_col_summary)
+    result = expr.execute()
     assert result.shape == (1, 7)
     assert len(result) == 1
 
