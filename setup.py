@@ -38,7 +38,6 @@ setuptools.setup(
     description=description,
     long_description=readme,
     author="Ibis Contributors",
-    author_email=None,
     maintainer="Tim Swast",
     maintainer_email="swast@google.com",
     url="https://github.com/ibis-project/ibis-bigquery",
