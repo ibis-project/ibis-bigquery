@@ -1,6 +1,16 @@
 # Changelog
 
-### [0.1.1](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.0...v0.1.1) (2021-04-28)
+## [1.0.0](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.1...v1.0.0) (2021-12-02)
+
+### Bug Fixes
+
+* substr fails to compile ([#95](https://github.com/ibis-project/ibis-bigquery/pull/95))) 
+
+### Dependencies
+
+* support pyarrow 4 ([#45](https://www.github.com/ibis-project/ibis-bigquery/issues/45)) ([0346821](https://www.github.com/ibis-project/ibis-bigquery/commit/03468217650d639d304c91e00ca4507828cfcfc4))
+
+## [0.1.1](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.0...v0.1.1) (2021-04-28)
 
 
 ### Dependencies
