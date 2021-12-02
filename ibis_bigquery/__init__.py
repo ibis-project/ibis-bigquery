@@ -17,6 +17,7 @@ from .client import (
     BigQueryTable,
     _create_client_info,
     bigquery_field_to_ibis_dtype,
+    bigquery_param,
     parse_project_and_dataset,
     rename_partitioned_column,
 )
@@ -206,9 +207,6 @@ class Backend(BaseSQLBackend):
         assert dataset is not None, "dataset is None"
         return self.get_schema(table, database=dataset)
 
-    def _get_query(self, dml, **kwargs):
-        return self.query_class(self, dml, query_parameters=dml.context.params)
-
     def _adapt_types(self, descr):
         names = []
         adapted_types = []
@@ -228,8 +226,11 @@ class Backend(BaseSQLBackend):
         query.result()  # blocks until finished
         return BigQueryCursor(query)
 
-    def raw_sql(self, query: str, results=False):
-        return self._execute(query, results=results)
+    def raw_sql(self, query: str, results=False, params=None):
+        query_parameters = [
+            bigquery_param(param, value) for param, value in (params or {}).items()
+        ]
+        return self._execute(query, results=results, query_parameters=query_parameters)
 
     @property
     def current_database(self):
@@ -243,6 +244,43 @@ class Backend(BaseSQLBackend):
                 "to assign your client a dataset."
             )
         return self.database_class(name or self.dataset, self)
+
+    def execute(self, expr, params=None, limit="default", **kwargs):
+        """Compile and execute the given Ibis expression.
+
+        Compile and execute Ibis expression using this backend client
+        interface, returning results in-memory in the appropriate object type
+
+        Parameters
+        ----------
+        expr : Expr
+        limit : int, default None
+          For expressions yielding result yets; retrieve at most this number of
+          values/rows. Overrides any limit already set on the expression.
+        params : not yet implemented
+        kwargs : Backends can receive extra params. For example, clickhouse
+            uses this to receive external_tables as dataframes.
+
+        Returns
+        -------
+        output : input type dependent
+          Table expressions: pandas.DataFrame
+          Array expressions: pandas.Series
+          Scalar expressions: Python scalar value
+        """
+        # TODO: upstream needs to pass params to raw_sql, I think.
+        kwargs.pop("timecontext", None)
+        query_ast = self.compiler.to_ast_ensure_limit(expr, limit, params=params)
+        sql = query_ast.compile()
+        self._log(sql)
+        cursor = self.raw_sql(sql, params=params, **kwargs)
+        schema = self.ast_schema(query_ast, **kwargs)
+        result = self.fetch_from_cursor(cursor, schema)
+
+        if hasattr(getattr(query_ast, "dml", query_ast), "result_handler"):
+            result = query_ast.dml.result_handler(result)
+
+        return result
 
     def exists_database(self, name):
         project, dataset = self._parse_project_and_dataset(name)
