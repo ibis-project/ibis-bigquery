@@ -255,6 +255,16 @@ class Backend(BaseSQLBackend):
         else:
             return True
 
+    def exists_table(self, name: str, database: str = None) -> bool:
+        table_id = self._fully_qualified_name(name, database)
+        client = self.client
+        try:
+            client.get_table(table_id)
+        except NotFound:
+            return False
+        else:
+            return True
+
     def fetch_from_cursor(self, cursor, schema):
         df = cursor.query.to_dataframe()
         return schema.apply_to(df)
