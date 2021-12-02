@@ -19,7 +19,7 @@ description = "Ibis BigQuery backend"
 # 'Development Status :: 3 - Alpha'
 # 'Development Status :: 4 - Beta'
 # 'Development Status :: 5 - Production/Stable'
-release_status = "Development Status :: 4 - Beta"
+release_status = "Development Status :: 5 - Production/Stable'"
 
 package_root = pathlib.Path(__file__).parent
 
@@ -44,7 +44,7 @@ setuptools.setup(
         "ibis-framework >=1.2.0,<2.0.0dev",
         "google-cloud-bigquery >=1.12.0,<3.0.0dev",
         "google-cloud-bigquery-storage >=1.0.0,<3.0.0dev",
-        "pyarrow >=1.0.0,<5.0.0dev",
+        "pyarrow >=1.0.0,<7.0.0dev",
         "pydata-google-auth",
         # Workaround for ibis 1.x incompatibility with SQLAlchemy 1.4
         # AttributeError: module 'sqlalchemy' has no attribute 'Binary'
