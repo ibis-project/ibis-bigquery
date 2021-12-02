@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.1...v2.0.0) (2021-12-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* support ibis 2.x, drop ibis 1.x (#93)
+
+### Features
+
+* support ibis 2.x, drop ibis 1.x ([#93](https://www.github.com/ibis-project/ibis-bigquery/issues/93)) ([780d071](https://www.github.com/ibis-project/ibis-bigquery/commit/780d07168758571d582e8a679e194ac8de33b36b))
+
+
+### Miscellaneous Chores
+
+* release 2.0.0 ([c5c3f24](https://www.github.com/ibis-project/ibis-bigquery/commit/c5c3f2414dbb2046b5e3bdb14204b6440c9a772b))
+
 ## [1.0.0](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.1...v1.0.0) (2021-12-02)
 
 ### Bug Fixes
