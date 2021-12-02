@@ -1,5 +1,6 @@
 """BigQuery public API."""
 from typing import Optional
+import warnings
 
 import google.auth.credentials
 import google.cloud.bigquery as bq
@@ -276,6 +277,18 @@ class Backend(BaseSQLBackend):
         return result
 
     def exists_database(self, name):
+        """
+        Return whether a database name exists in the current connection.
+
+        Deprecated in Ibis 2.0. Use `name in client.list_databases()` instead.
+        """
+        warnings.warn(
+            '`client.exists_database(name)` is deprecated, and will be '
+            'removed in a future version of Ibis. Use '
+            '`name in client.list_databases()` instead.',
+            FutureWarning,
+        )
+        
         project, dataset = self._parse_project_and_dataset(name)
         client = self.client
         dataset_ref = client.dataset(dataset, project=project)
@@ -287,6 +300,18 @@ class Backend(BaseSQLBackend):
             return True
 
     def exists_table(self, name: str, database: str = None) -> bool:
+        """
+        Return whether a table name exists in the database.
+
+        Deprecated in Ibis 2.0. Use `name in client.list_tables()` instead.
+        """
+        warnings.warn(
+            '`client.exists_table(name)` is deprecated, and will be '
+            'removed in a future version of Ibis. Use '
+            '`name in client.list_tables()` instead.',
+            FutureWarning,
+        )
+
         table_id = self._fully_qualified_name(name, database)
         client = self.client
         try:
