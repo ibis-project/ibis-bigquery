@@ -5,14 +5,8 @@ import datetime
 from functools import partial
 
 import ibis
+from ibis.backends.base.sql import compiler as comp
 
-try:
-    import ibis.backends.base_sqlalchemy.compiler as comp
-except ImportError:
-    try:
-        import ibis.sql.compiler as comp
-    except ImportError:
-        import ibis.backends.base.sql.compiler as comp
 try:
     import ibis.common.exceptions as com
 except ImportError:
@@ -25,75 +19,21 @@ import ibis.expr.types as ir
 import numpy as np
 import regex as re
 import toolz
-
-try:
-    from ibis.backends.base.sql.registry import (
-        fixed_arity,
-        literal,
-        operation_registry,
-        reduction,
-        unary,
-    )
-except ImportError:
-    try:
-        # 2.x
-        from ibis.backends.base.sql import (
-            fixed_arity,
-            literal,
-            operation_registry,
-            reduction,
-            unary,
-        )
-    except ImportError:
-        try:
-            # 1.4
-            from ibis.backends.base_sql import (
-                fixed_arity,
-                literal,
-                operation_registry,
-                reduction,
-                unary,
-            )
-        except ImportError:
-            # 1.2
-            from ibis.impala.compiler import _literal as literal
-            from ibis.impala.compiler import _operation_registry as operation_registry
-            from ibis.impala.compiler import _reduction as reduction
-            from ibis.impala.compiler import fixed_arity, unary
-
-try:
-    from ibis.backends.base_sql.compiler import (
-        BaseExprTranslator,
-        BaseSelect,
-        BaseTableSetFormatter,
-    )
-except ImportError:
-    # 1.2
-    from ibis.impala.compiler import ImpalaExprTranslator as BaseExprTranslator
-    from ibis.impala.compiler import ImpalaSelect as BaseSelect
-    from ibis.impala.compiler import ImpalaTableSetFormatter as BaseTableSetFormatter
-
+from ibis.backends.base.sql.compiler import ExprTranslator, TableSetFormatter
+from ibis.backends.base.sql.registry import (
+    fixed_arity,
+    literal,
+    operation_registry,
+    reduction,
+    unary,
+)
 from multipledispatch import Dispatcher
 
 from .datatypes import ibis_type_to_bigquery_type
 
 
-def build_ast(expr, context):
-    """Create a QueryAST from an Ibis expression."""
-    builder = BigQueryQueryBuilder(expr, context=context)
-    return builder.get_result()
-
-
 class BigQueryUDFNode(ops.ValueOp):
     """Represents use of a UDF."""
-
-
-class BigQuerySelectBuilder(comp.SelectBuilder):
-    """Transforms expression IR to a query pipeline."""
-
-    @property
-    def _select_class(self):
-        return BigQuerySelect
 
 
 class BigQueryUDFDefinition(comp.DDL):
@@ -124,34 +64,6 @@ def find_bigquery_udf(expr):
     else:
         result = None
     return lin.proceed, result
-
-
-class BigQueryQueryBuilder(comp.QueryBuilder):
-    """Generator of QueryASTs."""
-
-    select_builder = BigQuerySelectBuilder
-    union_class = BigQueryUnion
-
-    def generate_setup_queries(self):
-        """Generate DDL for temporary resources."""
-        queries = map(
-            partial(BigQueryUDFDefinition, context=self.context),
-            lin.traverse(find_bigquery_udf, self.expr),
-        )
-
-        # UDFs are uniquely identified by the name of the Node subclass we
-        # generate.
-        return list(toolz.unique(queries, key=lambda x: type(x.expr.op()).__name__))
-
-
-class BigQueryContext(comp.QueryContext):
-    """Recorder of information used in AST to SQL conversion."""
-
-    def _to_sql(self, expr, ctx):
-        builder = BigQueryQueryBuilder(expr, context=ctx)
-        query_ast = builder.get_result()
-        compiled = query_ast.compile()
-        return compiled
 
 
 def _extract_field(sql_attr):
@@ -506,13 +418,18 @@ _operation_registry = {
 }
 
 
-class BigQueryExprTranslator(BaseExprTranslator):
+class BigQueryExprTranslator(ExprTranslator):
     """Translate expressions to strings."""
 
     _registry = _operation_registry
-    _rewrites = BaseExprTranslator._rewrites.copy()
 
-    context_class = BigQueryContext
+    @classmethod
+    def compiles(cls, klass):
+        def decorator(f):
+            cls._registry[klass] = f
+            return f
+
+        return decorator
 
     def _trans_param(self, expr):
         op = expr.op()
@@ -521,18 +438,7 @@ class BigQueryExprTranslator(BaseExprTranslator):
         return "@{}".format(expr.get_name())
 
 
-try:
-    compiles = BigQueryExprTranslator.compiles
-except AttributeError:
-    # https://github.com/ibis-project/ibis/commit/3d5a10
-    def _add_operation(operation):
-        def decorator(translation_func):
-            BigQueryExprTranslator.add_operation(operation, translation_func)
-
-        return decorator
-
-    compiles = _add_operation
-
+compiles = BigQueryExprTranslator.compiles
 rewrites = BigQueryExprTranslator.rewrites
 
 
@@ -591,20 +497,29 @@ def compiles_string_to_timestamp(translator, expr):
     return "PARSE_TIMESTAMP({}, {})".format(fmt_string, arg_formatted)
 
 
-class BigQueryTableSetFormatter(BaseTableSetFormatter):
+class BigQueryTableSetFormatter(TableSetFormatter):
     def _quote_identifier(self, name):
         if re.match(r"^[A-Za-z][A-Za-z_0-9]*$", name):
             return name
         return "`{}`".format(name)
 
 
-class BigQuerySelect(BaseSelect):
+class BigQueryCompiler(comp.Compiler):
+    translator_class = BigQueryExprTranslator
+    table_set_formatter_class = BigQueryTableSetFormatter
+    union_class = BigQueryUnion
 
-    translator = BigQueryExprTranslator
+    @staticmethod
+    def _generate_setup_queries(expr, context):
+        """Generate DDL for temporary resources."""
+        queries = map(
+            partial(BigQueryUDFDefinition, context=context),
+            lin.traverse(find_bigquery_udf, expr),
+        )
 
-    @property
-    def table_set_formatter(self):
-        return BigQueryTableSetFormatter
+        # UDFs are uniquely identified by the name of the Node subclass we
+        # generate.
+        return list(toolz.unique(queries, key=lambda x: type(x.expr.op()).__name__))
 
 
 @rewrites(ops.IdenticalTo)

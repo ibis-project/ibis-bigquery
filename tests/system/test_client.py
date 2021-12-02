@@ -11,7 +11,6 @@ import pandas as pd
 import pandas.testing as tm
 import pytest
 import pytz
-from google.api_core import exceptions
 
 import ibis_bigquery
 from ibis_bigquery.client import bigquery_param
@@ -58,9 +57,9 @@ def test_list_tables(client):
 
 
 def test_current_database(client, dataset_id):
-    assert client.current_database.name == dataset_id
-    assert client.current_database.name == client.dataset_id
-    assert client.current_database.tables == client.list_tables()
+    assert client.current_database == dataset_id
+    assert client.current_database == client.dataset_id
+    assert client.list_tables(database=client.current_database) == client.list_tables()
 
 
 def test_database(client):
@@ -538,10 +537,11 @@ def test_exists_table_different_project(client):
 
 
 def test_exists_table_different_project_fully_qualified(client):
-    # TODO(phillipc): Should we raise instead?
     name = "bigquery-public-data.epa_historical_air_quality.co_daily_summary"
-    with pytest.raises(exceptions.BadRequest):
-        client.exists_table(name)
+    assert client.exists_table(name)
+    assert not client.exists_table(
+        "bigquery-public-data.epa_historical_air_quality.foobar"
+    )
 
 
 @pytest.mark.parametrize(
@@ -687,8 +687,9 @@ def test_boolean_reducers(alltypes):
 
 
 def test_column_summary(alltypes):
-    b = alltypes.bool_col.summary()
-    result = b.execute()
+    bool_col_summary = alltypes.bool_col.summary()
+    expr = alltypes.aggregate(bool_col_summary)
+    result = expr.execute()
     assert result.shape == (1, 7)
     assert len(result) == 1
 
