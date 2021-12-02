@@ -47,13 +47,6 @@ class Backend(BaseSQLBackend):
     database_class = BigQueryDatabase
     table_class = BigQueryTable
 
-    # These were moved from TestConf for use in common test suite.
-    # TODO: Indicate RoundAwayFromZero and UnorderedComparator.
-    # https://github.com/ibis-project/ibis-bigquery/issues/30
-    supports_divide_by_zero = True
-    supports_floating_modulus = False
-    returned_timestamp_unit = "us"
-
     def connect(
         self,
         project_id: Optional[str] = None,
