@@ -57,9 +57,9 @@ def test_list_tables(client):
 
 
 def test_current_database(client, dataset_id):
-    assert client.current_database.name == dataset_id
-    assert client.current_database.name == client.dataset_id
-    assert client.current_database.tables == client.list_tables()
+    assert client.current_database == dataset_id
+    assert client.current_database == client.dataset_id
+    assert client.list_tables(database=client.current_database) == client.list_tables()
 
 
 def test_database(client):

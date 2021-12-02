@@ -2,7 +2,7 @@
 
 import datetime
 from collections import OrderedDict
-from typing import Optional, Tuple
+from typing import Tuple
 
 import google.cloud.bigquery as bq
 import ibis
@@ -275,9 +275,7 @@ def rename_partitioned_column(table_expr, bq_table, partition_col):
     return table_expr.relabel({NATIVE_PARTITION_COL: partition_col})
 
 
-def parse_project_and_dataset(
-    project: str, dataset: Optional[str] = None
-) -> Tuple[str, str, Optional[str]]:
+def parse_project_and_dataset(project: str, dataset: str = "") -> Tuple[str, str, str]:
     """Compute the billing project, data project, and dataset if available.
 
     This function figure out the project id under which queries will run versus
@@ -321,7 +319,7 @@ def parse_project_and_dataset(
     None
 
     """
-    if dataset is not None and "." in dataset:
+    if "." in dataset:
         data_project, dataset = dataset.split(".")
         billing_project = project
     else:

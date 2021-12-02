@@ -1,6 +1,6 @@
 """BigQuery public API."""
 import warnings
-from typing import Optional
+from typing import Optional, Tuple
 
 import google.auth.credentials
 import google.cloud.bigquery as bq
@@ -51,7 +51,7 @@ class Backend(BaseSQLBackend):
     def connect(
         self,
         project_id: Optional[str] = None,
-        dataset_id: Optional[str] = None,
+        dataset_id: str = "",
         credentials: Optional[google.auth.credentials.Credentials] = None,
         application_name: Optional[str] = None,
         auth_local_webserver: bool = False,
@@ -106,7 +106,7 @@ class Backend(BaseSQLBackend):
         Backend
 
         """
-        default_project_id = None
+        default_project_id = ""
 
         if credentials is None:
             scopes = SCOPES
@@ -156,7 +156,7 @@ class Backend(BaseSQLBackend):
 
         return new_backend
 
-    def _parse_project_and_dataset(self, dataset):
+    def _parse_project_and_dataset(self, dataset) -> Tuple[str, str]:
         if not dataset and not self.dataset:
             raise ValueError("Unable to determine BigQuery dataset.")
         project, _, dataset = parse_project_and_dataset(
@@ -227,11 +227,11 @@ class Backend(BaseSQLBackend):
         return self._execute(query, results=results, query_parameters=query_parameters)
 
     @property
-    def current_database(self):
-        return self.database(self.dataset)
+    def current_database(self) -> str:
+        return self.dataset
 
     def database(self, name=None):
-        if name is None and self.dataset is None:
+        if name is None and not self.dataset:
             raise ValueError(
                 "Unable to determine BigQuery dataset. Call "
                 "client.database('my_dataset') or set_database('my_dataset') "
@@ -283,12 +283,12 @@ class Backend(BaseSQLBackend):
         Deprecated in Ibis 2.0. Use `name in client.list_databases()` instead.
         """
         warnings.warn(
-            '`client.exists_database(name)` is deprecated, and will be '
-            'removed in a future version of Ibis. Use '
-            '`name in client.list_databases()` instead.',
+            "`client.exists_database(name)` is deprecated, and will be "
+            "removed in a future version of Ibis. Use "
+            "`name in client.list_databases()` instead.",
             FutureWarning,
         )
-        
+
         project, dataset = self._parse_project_and_dataset(name)
         client = self.client
         dataset_ref = client.dataset(dataset, project=project)
@@ -306,9 +306,9 @@ class Backend(BaseSQLBackend):
         Deprecated in Ibis 2.0. Use `name in client.list_tables()` instead.
         """
         warnings.warn(
-            '`client.exists_table(name)` is deprecated, and will be '
-            'removed in a future version of Ibis. Use '
-            '`name in client.list_tables()` instead.',
+            "`client.exists_table(name)` is deprecated, and will be "
+            "removed in a future version of Ibis. Use "
+            "`name in client.list_tables()` instead.",
             FutureWarning,
         )
 
@@ -367,7 +367,7 @@ def compile(expr, params=None, **kwargs):
 
 def connect(
     project_id: Optional[str] = None,
-    dataset_id: Optional[str] = None,
+    dataset_id: str = "",
     credentials: Optional[google.auth.credentials.Credentials] = None,
     application_name: Optional[str] = None,
     auth_local_webserver: bool = False,
