@@ -19,7 +19,7 @@ description = "Ibis BigQuery backend"
 # 'Development Status :: 3 - Alpha'
 # 'Development Status :: 4 - Beta'
 # 'Development Status :: 5 - Production/Stable'
-release_status = "Development Status :: 4 - Beta"
+release_status = "Development Status :: 5 - Production/Stable"
 
 package_root = pathlib.Path(__file__).parent
 
@@ -37,6 +37,10 @@ setuptools.setup(
     version=version,
     description=description,
     long_description=readme,
+    author="Ibis Contributors",
+    author_email=None,
+    maintainer="Tim Swast",
+    maintainer_email="swast@google.com",
     url="https://github.com/ibis-project/ibis-bigquery",
     packages=setuptools.find_packages(),
     python_requires=">=3.7",
@@ -44,7 +48,7 @@ setuptools.setup(
         "ibis-framework >=1.2.0,<3.0.0dev",
         "google-cloud-bigquery >=1.12.0,<3.0.0dev",
         "google-cloud-bigquery-storage >=1.0.0,<3.0.0dev",
-        "pyarrow >=1.0.0,<5.0.0dev",
+        "pyarrow >=1.0.0,<7.0.0dev",
         "pydata-google-auth",
     ],
     classifiers=[
