@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.7", "3.8", "3.9"]
+        python_version: ["3.7", "3.10"]
         ibis_version: ["github"]
         include:
           - python_version: "3.7"

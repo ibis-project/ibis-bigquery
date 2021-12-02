@@ -32,9 +32,7 @@ def test_project_id_different_from_default_credentials(monkeypatch):
 
 
 def test_without_dataset(project_id, credentials):
-    con = ibis_bigquery.connect(
-        project_id=project_id, dataset_id=None, credentials=credentials,
-    )
+    con = ibis_bigquery.connect(project_id=project_id, credentials=credentials,)
     with pytest.raises(ValueError, match="Unable to determine BigQuery"):
         con.list_tables()
 

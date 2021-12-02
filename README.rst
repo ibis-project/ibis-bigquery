@@ -9,7 +9,7 @@ Installation
 
 Supported Python Versions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-Python >= 3.7, < 3.10
+Python >= 3.7, < 3.11
 
 Unsupported Python Versions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -33,7 +33,7 @@ Usage
 Connecting to BigQuery
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Recommended usage (Ibis 2.x, only [not yet released]):
+Recommended usage (Ibis 2.x, only):
 
 .. code-block:: python
 

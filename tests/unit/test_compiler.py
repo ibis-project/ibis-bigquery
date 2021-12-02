@@ -273,12 +273,20 @@ def test_bucket():
     expected = """\
 SELECT
   CASE
+    WHEN (0 <= `value`) AND (`value` < 1) THEN 0
+    WHEN (1 <= `value`) AND (`value` <= 3) THEN 1
+    ELSE CAST(NULL AS INT64)
+  END AS `tmp`
+FROM t"""
+    expected_2 = """\
+SELECT
+  CASE
     WHEN (`value` >= 0) AND (`value` < 1) THEN 0
     WHEN (`value` >= 1) AND (`value` <= 3) THEN 1
     ELSE CAST(NULL AS INT64)
   END AS `tmp`
 FROM t"""
-    assert result == expected
+    assert result == expected or result == expected_2
 
 
 @pytest.mark.parametrize(
@@ -309,13 +317,13 @@ def test_large_compile():
     num_columns = 20
     num_joins = 7
 
-    class MockBigQueryClient(ibis_bigquery.BigQueryClient):
+    class MockBackend(ibis_bigquery.Backend):
         def __init__(self):
             pass
 
     names = [f"col_{i}" for i in range(num_columns)]
     schema = ibis.Schema(names, ["string"] * num_columns)
-    ibis_client = MockBigQueryClient()
+    ibis_client = MockBackend()
     table = TableExpr(ops.SQLQueryResult("select * from t", schema, ibis_client))
     for _ in range(num_joins):
         table = table.mutate(dummy=ibis.literal(""))
