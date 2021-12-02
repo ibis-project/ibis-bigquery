@@ -278,7 +278,15 @@ SELECT
     ELSE CAST(NULL AS INT64)
   END AS `tmp`
 FROM t"""
-    assert result == expected
+    expected_2 = """\
+SELECT
+  CASE
+    WHEN (`value` >= 0) AND (`value` < 1) THEN 0
+    WHEN (`value` >= 1) AND (`value` <= 3) THEN 1
+    ELSE CAST(NULL AS INT64)
+  END AS `tmp`
+FROM t"""
+    assert result == expected or result == expected_2
 
 
 @pytest.mark.parametrize(
