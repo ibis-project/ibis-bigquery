@@ -62,7 +62,9 @@ jobs:
     steps:
 
     - name: checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
+      with:
+        path: ibis_bigquery
 
     - name: checkout ibis
       uses: actions/checkout@v2
@@ -78,7 +80,7 @@ jobs:
     - name: install dependencies (ibis ${{ matrix.ibis_version }})
       env:
         IBIS_VERSION: ${{ matrix.ibis_version }}
-      run: ./ci/install_deps.sh
+      run: ./ibis_bigquery/ci/install_deps.sh
 
     - name: run tests
-      run: python -m pytest tests/unit
+      run: python -m pytest ./ibis_bigquery/tests/unit
