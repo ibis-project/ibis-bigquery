@@ -318,8 +318,7 @@ def test_large_compile():
     num_joins = 7
 
     class MockBackend(ibis_bigquery.Backend):
-        def __init__(self):
-            pass
+        pass
 
     names = [f"col_{i}" for i in range(num_columns)]
     schema = ibis.Schema(names, ["string"] * num_columns)
