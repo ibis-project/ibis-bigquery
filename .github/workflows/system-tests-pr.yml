@@ -55,7 +55,7 @@ jobs:
       run: python -m pytest ./ibis_bigquery/tests/system --save-dataset
       env:
         GOOGLE_BIGQUERY_PROJECT_ID: ibis-gbq
-        GOOGLE_APPLICATION_CREDENTIALS: ${{ env.HOME }}/secrets/gcloud-service-key.json
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ env.HOME }}/ibis_bigquery/secrets/gcloud-service-key.json
 
 
     # Remove the label so that it can be added again to re-trigger a build
