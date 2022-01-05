@@ -27,7 +27,6 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
         path: ibis_bigquery
 
     - name: set up python ${{ matrix.python-version }}
