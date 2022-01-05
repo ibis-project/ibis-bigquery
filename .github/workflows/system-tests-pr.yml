@@ -27,6 +27,7 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
       with:
+        ref: ${{ github.event.pull_request.head.sha }}
         path: ibis_bigquery
 
     - name: set up python ${{ matrix.python-version }}
@@ -52,10 +53,9 @@ jobs:
         GCLOUD_KEY_PASSPHRASE: ${{ secrets.GCLOUD_KEY_PASSPHRASE }}
 
     - name: run tests
-      run: python -m pytest ./ibis_bigquery/tests/system --save-dataset
+      run: GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/gcloud-service-key.json" python -m pytest ./ibis_bigquery/tests/system --save-dataset
       env:
         GOOGLE_BIGQUERY_PROJECT_ID: ibis-gbq
-        GOOGLE_APPLICATION_CREDENTIALS: ${{ env.HOME }}/secrets/gcloud-service-key.json
 
 
     # Remove the label so that it can be added again to re-trigger a build

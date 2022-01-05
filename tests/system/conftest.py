@@ -47,7 +47,7 @@ def default_credentials():
         credentials, project_id = google.auth.default(
             scopes=ibis_bigquery.EXTERNAL_DATA_SCOPES
         )
-    except google.auth.excecptions.DefaultCredentialsError as exc:
+    except google.auth.exceptions.DefaultCredentialsError as exc:
         pytest.skip(f"Could not get GCP credentials: {exc}")
 
     return credentials, project_id
