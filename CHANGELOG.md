@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.0.1](https://www.github.com/ibis-project/ibis-bigquery/compare/v2.0.0...v2.0.1) (2022-01-05)
+
+
+### Dependencies
+
+* fix minimum ibis-framework dependency ([b8834ce](https://www.github.com/ibis-project/ibis-bigquery/commit/b8834ce58453a09d790f44eb73f98319f17f84fa))
+
 ## [2.0.0](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.1...v2.0.0) (2021-12-02)
 
 
