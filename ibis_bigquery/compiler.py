@@ -143,21 +143,16 @@ def _string_find(translator, expr):
     )
 
 
-def _translate_pattern(translator, pattern):
-    # add 'r' to string literals to indicate to BigQuery this is a raw string
-    return "r" * isinstance(pattern.op(), ops.Literal) + translator.translate(pattern)
-
-
 def _regex_search(translator, expr):
     arg, pattern = expr.op().args
-    regex = _translate_pattern(translator, pattern)
+    regex = translator.translate(pattern)
     result = "REGEXP_CONTAINS({}, {})".format(translator.translate(arg), regex)
     return result
 
 
 def _regex_extract(translator, expr):
     arg, pattern, index = expr.op().args
-    regex = _translate_pattern(translator, pattern)
+    regex = translator.translate(pattern)
     result = "REGEXP_EXTRACT_ALL({}, {})[SAFE_OFFSET({})]".format(
         translator.translate(arg), regex, translator.translate(index)
     )
@@ -166,7 +161,7 @@ def _regex_extract(translator, expr):
 
 def _regex_replace(translator, expr):
     arg, pattern, replacement = expr.op().args
-    regex = _translate_pattern(translator, pattern)
+    regex = translator.translate(pattern)
     result = "REGEXP_REPLACE({}, {}, {})".format(
         translator.translate(arg), regex, translator.translate(replacement)
     )
