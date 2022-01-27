@@ -332,3 +332,21 @@ def test_large_compile():
     table.compile()
     delta = datetime.datetime.now() - start
     assert delta.total_seconds() < 10
+
+
+def test_regex_strings_are_not_raw():
+    schema = [
+        ("field", "string"),
+        ("val", "int64"),
+    ]
+    table = ibis.table(schema, name="unbound_table")
+
+    expr = table[table['field'].re_search('(foo)')]
+    result = ibis_bigquery.compile(expr)
+
+    expected = """\
+SELECT *
+FROM unbound_table
+WHERE REGEXP_CONTAINS(`field`, '(foo)')"""
+
+    assert result == expected and expected.index(", '") + 1 != 'r'
