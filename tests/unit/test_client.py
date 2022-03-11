@@ -22,10 +22,8 @@ def test_parse_project_and_dataset(project, dataset, expected):
 
 
 def test_parse_project_and_dataset_raises_error():
-    with pytest.raises(ValueError) as exception:
+    expected_message = "data-project.my_dataset.table is not a BigQuery dataset"
+    with pytest.raises(ValueError, match=expected_message):
         ibis_bigquery.client.parse_project_and_dataset(
             "my-project", "data-project.my_dataset.table"
         )
-    assert "data-project.my_dataset.table is not a BigQuery dataset" in str(
-        exception.value
-    )
