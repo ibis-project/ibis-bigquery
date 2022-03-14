@@ -54,7 +54,7 @@ class Backend(BaseSQLBackend):
         dataset_id: str = "",
         credentials: Optional[google.auth.credentials.Credentials] = None,
         application_name: Optional[str] = None,
-        auth_local_webserver: bool = False,
+        auth_local_webserver: bool = True,
         auth_external_data: bool = False,
         auth_cache: str = "default",
         partition_column: Optional[str] = "PARTITIONTIME",
