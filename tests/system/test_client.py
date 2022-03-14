@@ -598,7 +598,7 @@ def test_multiple_project_queries_execute(client):
 
 
 def test_large_timestamp(client):
-    huge_timestamp = datetime.datetime(year=4567, month=1, day=1, tzinfo=datetime.timezone.utc)
+    huge_timestamp = datetime.datetime(year=4567, month=1, day=1)
     expr = ibis.timestamp("4567-01-01 00:00:00")
     result = client.execute(expr)
     assert result == huge_timestamp
