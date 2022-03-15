@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.1.0](https://github.com/ibis-project/ibis-bigquery/compare/v2.0.0...v2.1.0) (2022-03-15)
+
+
+### Features
+
+* Raise better error message when incorrect dataset is supplied [#113](https://github.com/ibis-project/ibis-bigquery/issues/113) ([#115](https://github.com/ibis-project/ibis-bigquery/issues/115)) ([dc474af](https://github.com/ibis-project/ibis-bigquery/commit/dc474af94bb8590c9acf3ec3f94634f366349580))
+
+
+### Bug Fixes
+
+* avoid deprecated "out-of-band" authentication flow ([#116](https://github.com/ibis-project/ibis-bigquery/issues/116)) ([9dc5808](https://github.com/ibis-project/ibis-bigquery/commit/9dc580800d607b809433bb2a3f2da2ba43b2f679))
+
+
+### Dependencies
+
+* fix minimum ibis-framework dependency ([b8834ce](https://github.com/ibis-project/ibis-bigquery/commit/b8834ce58453a09d790f44eb73f98319f17f84fa))
+
 ## [2.0.0](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.1...v2.0.0) (2021-12-02)
 
 
