@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.1.1](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.0...v2.1.1) (2022-03-29)
+
+
+### Bug Fixes
+
+* update to UDFContext for trans_numeric_udf function ([#119](https://github.com/ibis-project/ibis-bigquery/issues/119)) ([daf4da1](https://github.com/ibis-project/ibis-bigquery/commit/daf4da1c1dc2e1002570ff86cc358400d7f6832d))
+
 ## [2.1.0](https://github.com/ibis-project/ibis-bigquery/compare/v2.0.0...v2.1.0) (2022-03-15)
 
 
