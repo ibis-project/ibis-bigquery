@@ -243,7 +243,7 @@ return {internal_name}({args});
         @functools.wraps(f)
         def wrapped(*args, **kwargs):
             node = udf_node(*args, **kwargs)
-            node.js = js
+            object.__setattr__(node, "js", js)
             return node.to_expr()
 
         wrapped.__signature__ = signature
