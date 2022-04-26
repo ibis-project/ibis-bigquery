@@ -1,5 +1,18 @@
 # Changelog
 
+### [2.1.2](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.1...v2.1.2) (2022-04-26)
+
+
+### Bug Fixes
+
+* **udf:** use object.__setattr__ for 3.0.0 compatibility ([#122](https://github.com/ibis-project/ibis-bigquery/issues/122)) ([ec15188](https://github.com/ibis-project/ibis-bigquery/commit/ec151883d7f1e67e9b56725ceb81743970563115))
+
+
+### Dependencies
+
+* support google-cloud-bigquery 3.0 ([25fc69e](https://github.com/ibis-project/ibis-bigquery/commit/25fc69e11429bbb45f992a5db7bfb4e8615eb34b))
+* support ibis 3.0 ([#124](https://github.com/ibis-project/ibis-bigquery/issues/124)) ([25fc69e](https://github.com/ibis-project/ibis-bigquery/commit/25fc69e11429bbb45f992a5db7bfb4e8615eb34b))
+
 ### [2.1.1](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.0...v2.1.1) (2022-03-29)
 
 
