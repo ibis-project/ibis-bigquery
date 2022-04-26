@@ -44,10 +44,11 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     python_requires=">=3.7",
     install_requires=[
-        "ibis-framework >=2.0.0,<3.0.0dev",
-        "google-cloud-bigquery >=1.12.0,<3.0.0dev",
+        "ibis-framework >=2.0.0,<4.0.0dev",
+        "db-dtypes>=0.3.0,<2.0.0dev",
+        "google-cloud-bigquery >=1.12.0,<4.0.0dev",
         "google-cloud-bigquery-storage >=1.0.0,<3.0.0dev",
-        "pyarrow >=1.0.0,<7.0.0dev",
+        "pyarrow >=1.0.0,<8.0.0dev",
         "pydata-google-auth",
     ],
     classifiers=[
