@@ -23,9 +23,9 @@ jobs:
           - python_version: "3.8"
             "ibis_version": "2.1.1"
           - python_version: "3.9"
-            "ibis_version": "3.0.0"
+            "ibis_version": "3.0.2"
           - python_version: "3.10"
-            "ibis_version": "3.0.0"
+            "ibis_version": "3.0.2"
           - python_version: "3.10"
             "ibis_version": "github"
 
