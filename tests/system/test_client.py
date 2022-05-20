@@ -721,7 +721,6 @@ def test_boolean_casting(alltypes):
     count = result["count"]
     assert count.at[False] == 5840
     assert count.at[True] == 730
-    assert count.at[None] == 730
 
 
 def test_approx_median(alltypes):
