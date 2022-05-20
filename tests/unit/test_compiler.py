@@ -356,7 +356,7 @@ SELECT
     ELSE CAST(NULL AS INT64)
   END AS `{expected_name}`
 FROM t"""
-    expected_2 = """\
+    expected_2 = f"""\
 SELECT
   CASE
     WHEN (`value` >= 0) AND (`value` < 1) THEN 0
