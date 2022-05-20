@@ -348,13 +348,13 @@ def test_bucket():
     expr = t.value.bucket(buckets).name("foo")
     result = ibis_bigquery.compile(expr)
     expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "foo"
-    expected = """\
+    expected = f"""\
 SELECT
   CASE
     WHEN (0 <= `value`) AND (`value` < 1) THEN 0
     WHEN (1 <= `value`) AND (`value` <= 3) THEN 1
     ELSE CAST(NULL AS INT64)
-  END AS `foo`
+  END AS `{expected_name}`
 FROM t"""
     expected_2 = """\
 SELECT
@@ -362,7 +362,7 @@ SELECT
     WHEN (`value` >= 0) AND (`value` < 1) THEN 0
     WHEN (`value` >= 1) AND (`value` <= 3) THEN 1
     ELSE CAST(NULL AS INT64)
-  END AS `foo`
+  END AS `{expected_name}`
 FROM t"""
     assert result == expected or result == expected_2
 
