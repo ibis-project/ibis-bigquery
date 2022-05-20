@@ -12,6 +12,7 @@ import ibis_bigquery
 
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
+IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
 
 
 @pytest.mark.parametrize(
@@ -313,8 +314,9 @@ def test_binary():
     t = ibis.table([("value", "double")], name="t")
     expr = t["value"].cast(dt.binary).name("value_hash")
     result = ibis_bigquery.compile(expr)
-    expected = """\
-SELECT CAST(`value` AS BYTES) AS `tmp`
+    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "value_hash"
+    expected = f"""\
+SELECT CAST(`value` AS BYTES) AS `{expected_name}`
 FROM t"""
     assert result == expected
 
@@ -345,13 +347,14 @@ def test_bucket():
     buckets = [0, 1, 3]
     expr = t.value.bucket(buckets).name("foo")
     result = ibis_bigquery.compile(expr)
+    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "foo"
     expected = """\
 SELECT
   CASE
     WHEN (0 <= `value`) AND (`value` < 1) THEN 0
     WHEN (1 <= `value`) AND (`value` <= 3) THEN 1
     ELSE CAST(NULL AS INT64)
-  END AS `tmp`
+  END AS `foo`
 FROM t"""
     expected_2 = """\
 SELECT
@@ -359,7 +362,7 @@ SELECT
     WHEN (`value` >= 0) AND (`value` < 1) THEN 0
     WHEN (`value` >= 1) AND (`value` <= 3) THEN 1
     ELSE CAST(NULL AS INT64)
-  END AS `tmp`
+  END AS `foo`
 FROM t"""
     assert result == expected or result == expected_2
 
@@ -376,10 +379,11 @@ def test_window_unbounded(kind, begin, end, expected):
     kwargs = {kind: (begin, end)}
     expr = t.a.sum().over(ibis.window(**kwargs))
     result = ibis_bigquery.compile(expr)
+    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "sum"
     assert (
         result
         == f"""\
-SELECT sum(`a`) OVER (ROWS BETWEEN {expected}) AS `tmp`
+SELECT sum(`a`) OVER (ROWS BETWEEN {expected}) AS `{expected_name}`
 FROM t"""
     )
 
