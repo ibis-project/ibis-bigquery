@@ -17,6 +17,7 @@ from ibis_bigquery.client import bigquery_param
 
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
+IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
 
 
 def test_table(alltypes):
@@ -84,7 +85,8 @@ FROM t0"""  # noqa
 def test_struct_field_access(struct_table):
     expr = struct_table.struct_col["string_field"]
     result = expr.execute()
-    expected = pd.Series([None, "a"], name="tmp")
+    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "string_field"
+    expected = pd.Series([None, "a"], name=expected_name)
     tm.assert_series_equal(result, expected)
 
 
