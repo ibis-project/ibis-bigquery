@@ -8,7 +8,11 @@ import ibis_bigquery.client
     ["project", "dataset", "expected"],
     [
         ("my-project", "", ("my-project", "my-project", "")),
-        ("my-project", "my_dataset", ("my-project", "my-project", "my_dataset"),),
+        (
+            "my-project",
+            "my_dataset",
+            ("my-project", "my-project", "my_dataset"),
+        ),
         (
             "billing-project",
             "data-project.my_dataset",

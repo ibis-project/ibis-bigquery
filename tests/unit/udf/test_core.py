@@ -133,7 +133,7 @@ function {}(x, y) {{
 def test_pow():
     def f():
         a = 1
-        return a ** 2
+        return a**2
 
     expected = """\
 function f() {

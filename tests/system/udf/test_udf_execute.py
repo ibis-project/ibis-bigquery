@@ -39,7 +39,8 @@ def test_udf(client, alltypes, df):
 
     expected = (df.double_col + df.double_col).rename("tmp")
     tm.assert_series_equal(
-        result.value_counts().sort_index(), expected.value_counts().sort_index(),
+        result.value_counts().sort_index(),
+        expected.value_counts().sort_index(),
     )
 
 
@@ -216,11 +217,15 @@ SELECT (my_len_0('abcd') + my_len_0('abcd')) + my_len_1('abcd') AS `tmp`'''
         param(dt.float64, dt.int64, marks=pytest.mark.xfail(raises=TypeError)),
         # complex argument type, valid return type
         param(
-            dt.Array(dt.int64), dt.float64, marks=pytest.mark.xfail(raises=TypeError),
+            dt.Array(dt.int64),
+            dt.float64,
+            marks=pytest.mark.xfail(raises=TypeError),
         ),
         # valid argument type, complex invalid return type
         param(
-            dt.float64, dt.Array(dt.int64), marks=pytest.mark.xfail(raises=TypeError),
+            dt.float64,
+            dt.Array(dt.int64),
+            marks=pytest.mark.xfail(raises=TypeError),
         ),
         # both invalid
         param(

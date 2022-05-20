@@ -4,8 +4,7 @@ import toolz
 
 
 class NameFinder:
-    """Helper class to find the unique names in an AST.
-    """
+    """Helper class to find the unique names in an AST."""
 
     __slots__ = ()
 
