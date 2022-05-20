@@ -615,7 +615,8 @@ def test_string_to_timestamp(client):
     assert result == timestamp
 
     timestamp_tz = pd.Timestamp(
-        datetime.datetime(year=2017, month=2, day=6, hour=5), tz=pytz.timezone("UTC"),
+        datetime.datetime(year=2017, month=2, day=6, hour=5),
+        tz=pytz.timezone("UTC"),
     )
     expr_tz = ibis.literal("2017-02-06").to_timestamp("%F", "America/New_York")
     result_tz = client.execute(expr_tz)

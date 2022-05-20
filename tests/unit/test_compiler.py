@@ -18,14 +18,22 @@ IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
     ("case", "expected", "dtype"),
     [
         (datetime.date(2017, 1, 1), "DATE '2017-01-01'", dt.date),
-        (pd.Timestamp("2017-01-01"), "DATE '2017-01-01'", dt.date,),
+        (
+            pd.Timestamp("2017-01-01"),
+            "DATE '2017-01-01'",
+            dt.date,
+        ),
         ("2017-01-01", "DATE '2017-01-01'", dt.date),
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
-        ("2017-01-01 04:55:59", "TIMESTAMP '2017-01-01 04:55:59'", dt.timestamp,),
+        (
+            "2017-01-01 04:55:59",
+            "TIMESTAMP '2017-01-01 04:55:59'",
+            dt.timestamp,
+        ),
         (
             pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
@@ -42,9 +50,24 @@ def test_literal_date(case, expected, dtype):
 @pytest.mark.parametrize(
     ("case", "expected", "dtype", "strftime_func"),
     [
-        (datetime.date(2017, 1, 1), "DATE '2017-01-01'", dt.date, "FORMAT_DATE",),
-        (pd.Timestamp("2017-01-01"), "DATE '2017-01-01'", dt.date, "FORMAT_DATE",),
-        ("2017-01-01", "DATE '2017-01-01'", dt.date, "FORMAT_DATE",),
+        (
+            datetime.date(2017, 1, 1),
+            "DATE '2017-01-01'",
+            dt.date,
+            "FORMAT_DATE",
+        ),
+        (
+            pd.Timestamp("2017-01-01"),
+            "DATE '2017-01-01'",
+            dt.date,
+            "FORMAT_DATE",
+        ),
+        (
+            "2017-01-01",
+            "DATE '2017-01-01'",
+            dt.date,
+            "FORMAT_DATE",
+        ),
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
             "TIMESTAMP '2017-01-01 04:55:59'",
@@ -82,8 +105,16 @@ def test_day_of_week(case, expected, dtype, strftime_func):
 @pytest.mark.parametrize(
     ("case", "expected", "dtype"),
     [
-        ("test of hash", "'test of hash'", dt.string,),
-        (b"test of hash", "FROM_BASE64('dGVzdCBvZiBoYXNo')", dt.binary,),
+        (
+            "test of hash",
+            "'test of hash'",
+            dt.string,
+        ),
+        (
+            b"test of hash",
+            "FROM_BASE64('dGVzdCBvZiBoYXNo')",
+            dt.binary,
+        ),
     ],
 )
 def test_hash(case, expected, dtype):
@@ -98,14 +129,54 @@ def test_hash(case, expected, dtype):
 @pytest.mark.parametrize(
     ("case", "expected", "how", "dtype"),
     [
-        ("test", "md5('test')", "md5", dt.string,),
-        (b"test", "md5(FROM_BASE64('dGVzdA=='))", "md5", dt.binary,),
-        ("test", "sha1('test')", "sha1", dt.string,),
-        (b"test", "sha1(FROM_BASE64('dGVzdA=='))", "sha1", dt.binary,),
-        ("test", "sha256('test')", "sha256", dt.string,),
-        (b"test", "sha256(FROM_BASE64('dGVzdA=='))", "sha256", dt.binary,),
-        ("test", "sha512('test')", "sha512", dt.string,),
-        (b"test", "sha512(FROM_BASE64('dGVzdA=='))", "sha512", dt.binary,),
+        (
+            "test",
+            "md5('test')",
+            "md5",
+            dt.string,
+        ),
+        (
+            b"test",
+            "md5(FROM_BASE64('dGVzdA=='))",
+            "md5",
+            dt.binary,
+        ),
+        (
+            "test",
+            "sha1('test')",
+            "sha1",
+            dt.string,
+        ),
+        (
+            b"test",
+            "sha1(FROM_BASE64('dGVzdA=='))",
+            "sha1",
+            dt.binary,
+        ),
+        (
+            "test",
+            "sha256('test')",
+            "sha256",
+            dt.string,
+        ),
+        (
+            b"test",
+            "sha256(FROM_BASE64('dGVzdA=='))",
+            "sha256",
+            dt.binary,
+        ),
+        (
+            "test",
+            "sha512('test')",
+            "sha512",
+            dt.string,
+        ),
+        (
+            b"test",
+            "sha512(FROM_BASE64('dGVzdA=='))",
+            "sha512",
+            dt.binary,
+        ),
     ],
 )
 def test_hashbytes(case, expected, how, dtype):
@@ -125,7 +196,11 @@ def test_hashbytes(case, expected, how, dtype):
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
-        ("2017-01-01 04:55:59", "TIMESTAMP '2017-01-01 04:55:59'", dt.timestamp,),
+        (
+            "2017-01-01 04:55:59",
+            "TIMESTAMP '2017-01-01 04:55:59'",
+            dt.timestamp,
+        ),
         (
             pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
