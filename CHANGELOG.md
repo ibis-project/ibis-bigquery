@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.1.3](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.2...v2.1.3) (2022-05-25)
+
+
+### Bug Fixes
+
+* ensure that ScalarParameter names are used instead of Alias names ([#135](https://github.com/ibis-project/ibis-bigquery/issues/135)) ([bfe539a](https://github.com/ibis-project/ibis-bigquery/commit/bfe539a7c60439f7a521e230736aab3961dbabcc))
+
 ### [2.1.2](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.1...v2.1.2) (2022-04-26)
 
 
