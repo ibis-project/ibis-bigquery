@@ -29,6 +29,13 @@ try:
 except ImportError:
     pass
 
+try:
+    from ibis.expr.operations import Alias
+except ImportError:
+    # Allow older versions of ibis to work with ScalarParameters as well as
+    # versions >= 3.0.0
+    Alias = None
+
 
 __version__: str = ibis_bigquery_version.__version__
 
@@ -222,7 +229,24 @@ class Backend(BaseSQLBackend):
 
     def raw_sql(self, query: str, results=False, params=None):
         query_parameters = [
-            bigquery_param(param, value) for param, value in (params or {}).items()
+            bigquery_param(
+                # unwrap Alias instances
+                #
+                # Without unwrapping we try to execute compiled code that uses
+                # the ScalarParameter's raw name (e.g., @param_1) and not the
+                # alias's name which will fail. By unwrapping, we always use
+                # the raw name.
+                #
+                # This workaround is backwards compatible and doesn't require
+                # changes to ibis.
+                (
+                    param
+                    if Alias is None or not isinstance(param.op(), Alias)
+                    else param.op().arg
+                ),
+                value,
+            )
+            for param, value in (params or {}).items()
         ]
         return self._execute(query, results=results, query_parameters=query_parameters)
 

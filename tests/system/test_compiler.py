@@ -1,24 +1,42 @@
+import re
+
 import ibis
 import ibis.expr.datatypes as dt
 import packaging.version
 import pytest
+from pytest import param
 
 pytestmark = pytest.mark.bigquery
 
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_VERSION = packaging.version.Version("1.4.0")
+IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
+
+older_than_3 = pytest.mark.xfail(
+    IBIS_VERSION < IBIS_3_0_VERSION, reason="requires ibis >= 3"
+)
+at_least_3 = pytest.mark.xfail(
+    IBIS_VERSION >= IBIS_3_0_VERSION, reason="requires ibis < 3"
+)
 
 
-def test_timestamp_accepts_date_literals(alltypes, project_id, dataset_id):
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        param(r"@param_\d+", marks=[older_than_3], id="ibis3"),
+        param("@param", marks=[at_least_3], id="not_ibis3"),
+    ],
+)
+def test_timestamp_accepts_date_literals(alltypes, project_id, dataset_id, pattern):
     date_string = "2009-03-01"
     param = ibis.param(dt.timestamp).name("param_0")
     expr = alltypes.mutate(param=param)
     params = {param: date_string}
     result = expr.compile(params=params)
     expected = f"""\
-SELECT *, @param AS `param`
-FROM `{project_id}.{dataset_id}.functional_alltypes`"""
-    assert result == expected
+SELECT \\*, {pattern} AS `param`
+FROM `{project_id}\\.{dataset_id}\\.functional_alltypes`"""
+    assert re.match(expected, result) is not None
 
 
 @pytest.mark.parametrize(

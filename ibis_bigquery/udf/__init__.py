@@ -181,21 +181,18 @@ def udf(input_type, output_type, strict=True, libraries=None):
         signature = inspect.signature(f)
         parameter_names = signature.parameters.keys()
 
-        udf_node_fields = collections.OrderedDict(
-            [
-                (name, Arg(rlz.value(type)))
-                for name, type in zip(parameter_names, input_type)
-            ]
-            + [
-                (
-                    "output_type",
-                    lambda self, output_type=output_type: rlz.shape_like(
-                        self.args, dtype=output_type
-                    ),
-                ),
-                ("__slots__", ("js",)),
-            ]
-        )
+        udf_node_fields = {
+            name: Arg(rlz.value(type))
+            for name, type in zip(parameter_names, input_type)
+        }
+
+        try:
+            udf_node_fields["output_type"] = rlz.shape_like("args", dtype=output_type)
+        except TypeError:
+            udf_node_fields["output_dtype"] = property(lambda _: output_type)
+            udf_node_fields["output_shape"] = rlz.shape_like("args")
+
+        udf_node_fields["__slots__"] = ("js",)
 
         udf_node = create_udf_node(f.__name__, udf_node_fields)
 

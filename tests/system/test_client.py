@@ -1,6 +1,7 @@
 import collections
 import datetime
 import decimal
+import re
 
 import ibis
 import ibis.expr.datatypes as dt
@@ -11,6 +12,7 @@ import pandas as pd
 import pandas.testing as tm
 import pytest
 import pytz
+from pytest import param
 
 import ibis_bigquery
 from ibis_bigquery.client import bigquery_param
@@ -18,6 +20,13 @@ from ibis_bigquery.client import bigquery_param
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
+
+older_than_3 = pytest.mark.xfail(
+    IBIS_VERSION < IBIS_3_0_VERSION, reason="requires ibis >= 3"
+)
+at_least_3 = pytest.mark.xfail(
+    IBIS_VERSION >= IBIS_3_0_VERSION, reason="requires ibis < 3"
+)
 
 
 def test_table(alltypes):
@@ -204,7 +213,43 @@ def test_different_partition_col_name(monkeypatch, client):
     assert col in parted_alltypes.columns
 
 
-def test_subquery_scalar_params(alltypes, project_id, dataset_id):
+def scalar_params_ibis3(project_id, dataset_id):
+    return f"""\
+SELECT count\\(`foo`\\) AS `count`
+FROM \\(
+  SELECT `string_col`, sum\\(`float_col`\\) AS `foo`
+  FROM \\(
+    SELECT `float_col`, `timestamp_col`, `int_col`, `string_col`
+    FROM `{project_id}\\.{dataset_id}\\.functional_alltypes`
+  \\) t1
+  WHERE `timestamp_col` < @param_\\d+
+  GROUP BY 1
+\\) t0"""
+
+
+def scalar_params_not_ibis3(project_id, dataset_id):
+    return f"""\
+SELECT count\\(`foo`\\) AS `count`
+FROM \\(
+  SELECT `string_col`, sum\\(`float_col`\\) AS `foo`
+  FROM \\(
+    SELECT `float_col`, `timestamp_col`, `int_col`, `string_col`
+    FROM `{project_id}\\.{dataset_id}\\.functional_alltypes`
+    WHERE `timestamp_col` < @my_param
+  \\) t1
+  GROUP BY 1
+\\) t0"""
+
+
+@pytest.mark.parametrize(
+    "expected_fn",
+    [
+        param(scalar_params_ibis3, marks=[older_than_3], id="ibis3"),
+        param(scalar_params_not_ibis3, marks=[at_least_3], id="not_ibis3"),
+    ],
+)
+def test_subquery_scalar_params(alltypes, project_id, dataset_id, expected_fn):
+    expected = expected_fn(project_id, dataset_id)
     t = alltypes
     param = ibis.param("timestamp").name("my_param")
     expr = (
@@ -216,20 +261,7 @@ def test_subquery_scalar_params(alltypes, project_id, dataset_id):
         .foo.count()
     )
     result = expr.compile(params={param: "20140101"})
-    expected = """\
-SELECT count(`foo`) AS `count`
-FROM (
-  SELECT `string_col`, sum(`float_col`) AS `foo`
-  FROM (
-    SELECT `float_col`, `timestamp_col`, `int_col`, `string_col`
-    FROM `{}.{}.functional_alltypes`
-    WHERE `timestamp_col` < @my_param
-  ) t1
-  GROUP BY 1
-) t0""".format(
-        project_id, dataset_id
-    )
-    assert result == expected
+    assert re.match(expected, result) is not None
 
 
 def test_scalar_param_string(alltypes, df):
@@ -457,18 +489,21 @@ def test_raw_sql(client):
     assert client.raw_sql("SELECT 1").fetchall() == [(1,)]
 
 
-def test_scalar_param_scope(alltypes, project_id, dataset_id):
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        param(r"@param_\d+", marks=[older_than_3], id="ibis3"),
+        param("@param", marks=[at_least_3], id="not_ibis3"),
+    ],
+)
+def test_scalar_param_scope(alltypes, project_id, dataset_id, pattern):
     t = alltypes
     param = ibis.param("timestamp")
-    mut = t.mutate(param=param).compile(params={param: "2017-01-01"})
-    assert (
-        mut
-        == """\
-SELECT *, @param AS `param`
-FROM `{}.{}.functional_alltypes`""".format(
-            project_id, dataset_id
-        )
-    )
+    result = t.mutate(param=param).compile(params={param: "2017-01-01"})
+    expected = f"""\
+SELECT \\*, {pattern} AS `param`
+FROM `{project_id}\\.{dataset_id}\\.functional_alltypes`"""
+    assert re.match(expected, result) is not None
 
 
 def test_parted_column_rename(parted_alltypes):
