@@ -43,6 +43,7 @@ jobs:
       with:
         repository: ibis-project/ibis
         path: ibis
+        fetch-depth: 0
 
     - name: install dependencies (ibis ${{ matrix.ibis_version }})
       env:

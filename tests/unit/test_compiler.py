@@ -13,6 +13,7 @@ import ibis_bigquery
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
+IBIS_3_0_2_VERSION = packaging.version.Version("3.0.2")
 
 
 @pytest.mark.parametrize(
@@ -45,7 +46,8 @@ IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
 def test_literal_date(case, expected, dtype):
     expr = ibis.literal(case, type=dtype).year()
     result = ibis_bigquery.compile(expr)
-    assert result == f"SELECT EXTRACT(year from {expected}) AS `tmp`"
+    expected_name = "tmp" if IBIS_VERSION <= IBIS_3_0_2_VERSION else "year"
+    assert result == f"SELECT EXTRACT(year from {expected}) AS `{expected_name}`"
 
 
 @pytest.mark.parametrize(
@@ -214,7 +216,8 @@ def test_hashbytes(case, expected, how, dtype):
 def test_literal_timestamp_or_time(case, expected, dtype):
     expr = ibis.literal(case, type=dtype).hour()
     result = ibis_bigquery.compile(expr)
-    assert result == f"SELECT EXTRACT(hour from {expected}) AS `tmp`"
+    expected_name = "tmp" if IBIS_VERSION <= IBIS_3_0_2_VERSION else "hour"
+    assert result == f"SELECT EXTRACT(hour from {expected}) AS `{expected_name}`"
 
 
 def test_projection_fusion_only_peeks_at_immediate_parent():
