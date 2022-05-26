@@ -101,26 +101,25 @@ def _cast(translator, expr):
     return bigquery_cast(arg_formatted, arg.type(), target_type)
 
 
-def integer_to_timestamp(translator: compiler.ExprTranslator,
-                         expr: ibis.Expr) -> str:
-  """Interprets an integer as a timestamp."""
-  op = expr.op()
-  arg, unit = op.args
-  arg = translator.translate(arg)
+def integer_to_timestamp(translator: compiler.ExprTranslator, expr: ibis.Expr) -> str:
+    """Interprets an integer as a timestamp."""
+    op = expr.op()
+    arg, unit = op.args
+    arg = translator.translate(arg)
 
-  if unit == 's':
-    return 'TIMESTAMP_SECONDS({})'.format(arg)
-  elif unit == 'ms':
-    return 'TIMESTAMP_MILLIS({})'.format(arg)
-  elif unit == 'us':
-    return 'TIMESTAMP_MICROS({})'.format(arg)
-  elif unit == 'ns':
-    # Timestamps are represented internally as elapsed microseconds, so some
-    # rounding is required if an integer represents nanoseconds.
-    # https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#timestamp_type
-    return 'TIMESTAMP_MICROS(CAST(ROUND({} / 1000) AS INT64))'.format(arg)
+    if unit == "s":
+        return "TIMESTAMP_SECONDS({})".format(arg)
+    elif unit == "ms":
+        return "TIMESTAMP_MILLIS({})".format(arg)
+    elif unit == "us":
+        return "TIMESTAMP_MICROS({})".format(arg)
+    elif unit == "ns":
+        # Timestamps are represented internally as elapsed microseconds, so some
+        # rounding is required if an integer represents nanoseconds.
+        # https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#timestamp_type
+        return "TIMESTAMP_MICROS(CAST(ROUND({} / 1000) AS INT64))".format(arg)
 
-  raise NotImplementedError('cannot cast unit {}'.format(unit))
+    raise NotImplementedError("cannot cast unit {}".format(unit))
 
 
 def _struct_field(translator, expr):

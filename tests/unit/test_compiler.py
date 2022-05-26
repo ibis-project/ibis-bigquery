@@ -220,7 +220,7 @@ def test_integer_to_timestamp(case, unit, expected):
     expr = ibis.literal(case, type=dt.int64).to_timestamp(unit=unit)
     result = ibis_bigquery.compile(expr)
     assert result == f"SELECT {expected} AS `tmp`"
-    
+
 
 @pytest.mark.parametrize(
     ("case", "expected", "dtype"),
