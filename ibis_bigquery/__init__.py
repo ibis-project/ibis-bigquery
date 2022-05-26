@@ -22,7 +22,7 @@ from .client import (
     parse_project_and_dataset,
     rename_partitioned_column,
 )
-from .compiler import BigQueryCompiler
+from ibis_bigquery.compiler import BigQueryCompiler
 
 try:
     from .udf import udf  # noqa F401
