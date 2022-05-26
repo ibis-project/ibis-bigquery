@@ -5,7 +5,7 @@ import datetime
 from functools import partial
 
 import ibis
-from ibis.backends.base.sql import compiler as comp
+from ibis.backends.base.sql import compiler
 
 try:
     import ibis.common.exceptions as com
@@ -36,7 +36,7 @@ class BigQueryUDFNode(ops.ValueOp):
     """Represents use of a UDF."""
 
 
-class BigQueryUDFDefinition(comp.DDL):
+class BigQueryUDFDefinition(compiler.DDL):
     """Represents definition of a temporary UDF."""
 
     def __init__(self, expr, context):
@@ -48,7 +48,7 @@ class BigQueryUDFDefinition(comp.DDL):
         return self.expr.op().js
 
 
-class BigQueryUnion(comp.Union):
+class BigQueryUnion(compiler.Union):
     """Union of tables."""
 
     @staticmethod
@@ -99,6 +99,28 @@ def _cast(translator, expr):
     arg, target_type = op.args
     arg_formatted = translator.translate(arg)
     return bigquery_cast(arg_formatted, arg.type(), target_type)
+
+
+def integer_to_timestamp(translator: compiler.ExprTranslator,
+                         expr: ibis.Expr) -> str:
+  """Interprets an integer as a timestamp."""
+  op = expr.op()
+  arg, unit = op.args
+  arg = translator.translate(arg)
+
+  if unit == 's':
+    return 'TIMESTAMP_SECONDS({})'.format(arg)
+  elif unit == 'ms':
+    return 'TIMESTAMP_MILLIS({})'.format(arg)
+  elif unit == 'us':
+    return 'TIMESTAMP_MICROS({})'.format(arg)
+  elif unit == 'ns':
+    # Timestamps are represented internally as elapsed microseconds, so some
+    # rounding is required if an integer represents nanoseconds.
+    # https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#timestamp_type
+    return 'TIMESTAMP_MICROS(CAST(ROUND({} / 1000) AS INT64))'.format(arg)
+
+  raise NotImplementedError('cannot cast unit {}'.format(unit))
 
 
 def _struct_field(translator, expr):
@@ -286,7 +308,6 @@ _timestamp_units = {
     "m": "MINUTE",
     "h": "HOUR",
 }
-_time_units = _timestamp_units.copy()
 _timestamp_units.update(_date_units)
 
 
@@ -383,6 +404,7 @@ _operation_registry.update(
         ops.DateAdd: _timestamp_op("DATE_ADD", {"D", "W", "M", "Q", "Y"}),
         ops.DateSub: _timestamp_op("DATE_SUB", {"D", "W", "M", "Q", "Y"}),
         ops.TimestampNow: fixed_arity("CURRENT_TIMESTAMP", 0),
+        ops.TimestampFromUNIX: integer_to_timestamp,
     }
 )
 
@@ -504,7 +526,7 @@ class BigQueryTableSetFormatter(TableSetFormatter):
         return "`{}`".format(name)
 
 
-class BigQueryCompiler(comp.Compiler):
+class BigQueryCompiler(compiler.Compiler):
     translator_class = BigQueryExprTranslator
     table_set_formatter_class = BigQueryTableSetFormatter
     union_class = BigQueryUnion
@@ -552,15 +574,6 @@ def bq_mean(expr):
         return arg.cast("int64").mean(where=where)
     else:
         return expr
-
-
-UNIT_FUNCS = {"s": "SECONDS", "ms": "MILLIS", "us": "MICROS"}
-
-
-@compiles(ops.TimestampFromUNIX)
-def compiles_timestamp_from_unix(t, e):
-    value, unit = e.op().args
-    return "TIMESTAMP_{}({})".format(UNIT_FUNCS[unit], t.translate(value))
 
 
 @compiles(ops.Floor)

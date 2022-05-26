@@ -192,6 +192,37 @@ def test_hashbytes(case, expected, how, dtype):
 
 
 @pytest.mark.parametrize(
+    ("case", "unit", "expected"),
+    (
+        (
+            123456789,
+            "s",
+            "TIMESTAMP_SECONDS(123456789)",
+        ),
+        (
+            -123456789,
+            "ms",
+            "TIMESTAMP_MILLIS(-123456789)",
+        ),
+        (
+            123456789,
+            "us",
+            "TIMESTAMP_MICROS(123456789)",
+        ),
+        (
+            1234567891011,
+            "ns",
+            "TIMESTAMP_MICROS(CAST(ROUND(1234567891011 / 1000) AS INT64))",
+        ),
+    ),
+)
+def test_integer_to_timestamp(case, unit, expected):
+    expr = ibis.literal(case, type=dt.int64).to_timestamp(unit=unit)
+    result = ibis_bigquery.compile(expr)
+    assert result == f"SELECT {expected} AS `tmp`"
+    
+
+@pytest.mark.parametrize(
     ("case", "expected", "dtype"),
     [
         (
