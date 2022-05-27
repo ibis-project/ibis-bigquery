@@ -319,12 +319,6 @@ def bigquery_day_of_week_index(t, e):
     return "MOD(EXTRACT(DAYOFWEEK FROM {}) + 5, 7)".format(arg_formatted)
 
 
-def bigquery_day_of_week_name(translator, e):
-    """Convert TIMESTAMP to day-of-week string."""
-    arg = e.op().args[0]
-    return arg.strftime("%A")
-
-
 def bigquery_compiles_divide(t, e):
     """Floating point division."""
     return "IEEE_DIVIDE({}, {})".format(*map(t.translate, e.op().args))
@@ -360,33 +354,6 @@ def compiles_string_to_timestamp(translator, expr):
             fmt_string, arg_formatted, timezone_str
         )
     return "PARSE_TIMESTAMP({}, {})".format(fmt_string, arg_formatted)
-
-
-def identical_to(translator, expr):
-    left, right = expr.op().args
-    return (left.isnull() & right.isnull()) | (left == right)
-
-
-def log2(translator, expr):
-    (arg,) = expr.op().args
-    return arg.log(2)
-
-
-def bq_sum(translator, expr):
-    arg = expr.op().args[0]
-    where = expr.op().args[1]
-    if isinstance(arg, ir.BooleanColumn):
-        expr = arg.cast("int64").sum(where=where)
-    return translator.translate(expr)
-
-
-def bq_mean(translator, expr):
-    arg = expr.op().args[0]
-    where = expr.op().args[1]
-    if isinstance(arg, ir.BooleanColumn):
-        return arg.cast("int64").mean(where=where)
-    else:
-        return expr
 
 
 def compiles_floor(t, e):
@@ -451,7 +418,6 @@ OPERATION_REGISTRY = {
     # Logical
     ops.Any: bigquery_compile_any,
     ops.All: bigquery_compile_all,
-    ops.IdenticalTo: identical_to,
     ops.IfNull: fixed_arity("IFNULL", 2),
     ops.NotAny: bigquery_compile_notany,
     ops.NotAll: bigquery_compile_notall,
@@ -459,19 +425,15 @@ OPERATION_REGISTRY = {
     ops.CMSMedian: compiles_approx,
     ops.Covariance: compiles_covar,
     ops.Divide: bigquery_compiles_divide,
-    ops.Log2: log2,
     ops.Floor: compiles_floor,
-    ops.Mean: bq_mean,
     ops.Modulus: fixed_arity("MOD", 2),
     ops.Sign: unary("SIGN"),
-    ops.Sum: bq_sum,
     # Temporal functions
     ops.Date: unary("DATE"),
     ops.DateAdd: _timestamp_op("DATE_ADD", {"D", "W", "M", "Q", "Y"}),
     ops.DateSub: _timestamp_op("DATE_SUB", {"D", "W", "M", "Q", "Y"}),
     ops.DateTruncate: _truncate("DATE", _date_units),
     ops.DayOfWeekIndex: bigquery_day_of_week_index,
-    ops.DayOfWeekName: bigquery_day_of_week_name,
     ops.ExtractYear: _extract_field("year"),
     ops.ExtractMonth: _extract_field("month"),
     ops.ExtractDay: _extract_field("day"),
