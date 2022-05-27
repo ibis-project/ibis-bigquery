@@ -434,7 +434,9 @@ OPERATION_REGISTRY = {
     ops.DateSub: _timestamp_op("DATE_SUB", {"D", "W", "M", "Q", "Y"}),
     ops.DateTruncate: _truncate("DATE", _date_units),
     ops.DayOfWeekIndex: bigquery_day_of_week_index,
+    ops.ExtractEpochSeconds: _extract_field("epochseconds"),
     ops.ExtractYear: _extract_field("year"),
+    ops.ExtractQuarter: _extract_field("quarter"),
     ops.ExtractMonth: _extract_field("month"),
     ops.ExtractDay: _extract_field("day"),
     ops.ExtractHour: _extract_field("hour"),
@@ -492,9 +494,6 @@ def _try_register_op(op_name: str, value):
 _try_register_op("BitAnd", reduction("BIT_AND"))
 _try_register_op("BitOr", reduction("BIT_OR"))
 _try_register_op("BitXor", reduction("BIT_XOR"))
-# 1.4
-_try_register_op("ExtractQuarter", _extract_field("quarter"))
-_try_register_op("ExtractEpochSeconds", _extract_field("epochseconds"))
 
 
 _invalid_operations = {
