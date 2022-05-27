@@ -448,18 +448,19 @@ def test_large_compile():
 
 
 @pytest.mark.parametrize(
-    ("operation", "sql"),
+    ("operation", "sql", "keywords"),
     [
-        ("union", "UNION ALL"),
-        ("intersect", "INTERSECT DISTINCT"),
-        ("difference", "EXCEPT DISTINCT"),
+        ("union", "UNION ALL", {"distinct": False}),
+        ("union", "UNION DISTINCT", {"distinct": True}),
+        ("intersect", "INTERSECT DISTINCT", {}),
+        ("difference", "EXCEPT DISTINCT", {}),
     ],
 )
-def test_set_operation(operation, sql):
+def test_set_operation(operation, sql, keywords):
     t0 = ibis.table([("a", "int64")], name="t0")
     t1 = ibis.table([("a", "int64")], name="t1")
     expr = getattr(t0, operation)(
-        t1, **({"distinct": False} if operation == "union" else {})
+        t1, **keywords
     )
     result = ibis_bigquery.compile(expr)
 

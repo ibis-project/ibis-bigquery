@@ -93,8 +93,8 @@ class BigQueryCompiler(sql_compiler.Compiler):
     translator_class = BigQueryExprTranslator
     table_set_formatter_class = BigQueryTableSetFormatter
     union_class = BigQueryUnion
-    difference_class = BigQueryDifference
     intersect_class = BigQueryIntersection
+    difference_class = BigQueryDifference
 
     @staticmethod
     def _generate_setup_queries(expr, context):
