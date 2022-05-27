@@ -1,8 +1,8 @@
 """Methods to translate BigQuery expressions before compilation."""
 
-from ibis.backends.base.sql import compiler as sql_compiler
 import ibis.expr.operations as ops
 import ibis.expr.types as ir
+from ibis.backends.base.sql import compiler as sql_compiler
 
 
 def bigquery_day_of_week_name(e):

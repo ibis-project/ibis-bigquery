@@ -2,15 +2,12 @@
 
 from functools import partial
 
-from ibis.backends.base.sql import compiler as sql_compiler
-
 import ibis.expr.lineage as lin
 import regex as re
 import toolz
+from ibis.backends.base.sql import compiler as sql_compiler
 
-from ibis_bigquery import operations
-from ibis_bigquery import registry
-from ibis_bigquery import rewrites
+from ibis_bigquery import operations, registry, rewrites
 
 
 class BigQueryUDFDefinition(sql_compiler.DDL):

@@ -11,6 +11,8 @@ from google.api_core.exceptions import NotFound
 from ibis.backends.base.sql import BaseSQLBackend
 from pydata_google_auth import cache
 
+from ibis_bigquery.compiler import BigQueryCompiler
+
 from . import version as ibis_bigquery_version
 from .client import (
     BigQueryCursor,
@@ -22,7 +24,6 @@ from .client import (
     parse_project_and_dataset,
     rename_partitioned_column,
 )
-from ibis_bigquery.compiler import BigQueryCompiler
 
 try:
     from .udf import udf  # noqa F401

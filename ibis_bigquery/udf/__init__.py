@@ -18,8 +18,8 @@ except ImportError:
 from ibis.expr.signature import Argument as Arg
 
 from ..compiler import compiles
-from ..operations import BigQueryUDFNode
 from ..datatypes import UDFContext, ibis_type_to_bigquery_type
+from ..operations import BigQueryUDFNode
 from ..udf.core import PythonToJavaScriptTranslator
 
 __all__ = ("udf",)
