@@ -1,6 +1,72 @@
 # Changelog
 
-### [0.1.1](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.0...v0.1.1) (2021-04-28)
+### [2.1.3](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.2...v2.1.3) (2022-05-25)
+
+
+### Bug Fixes
+
+* ensure that ScalarParameter names are used instead of Alias names ([#135](https://github.com/ibis-project/ibis-bigquery/issues/135)) ([bfe539a](https://github.com/ibis-project/ibis-bigquery/commit/bfe539a7c60439f7a521e230736aab3961dbabcc))
+
+### [2.1.2](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.1...v2.1.2) (2022-04-26)
+
+
+### Bug Fixes
+
+* **udf:** use object.__setattr__ for 3.0.0 compatibility ([#122](https://github.com/ibis-project/ibis-bigquery/issues/122)) ([ec15188](https://github.com/ibis-project/ibis-bigquery/commit/ec151883d7f1e67e9b56725ceb81743970563115))
+
+
+### Dependencies
+
+* support google-cloud-bigquery 3.0 ([25fc69e](https://github.com/ibis-project/ibis-bigquery/commit/25fc69e11429bbb45f992a5db7bfb4e8615eb34b))
+* support ibis 3.0 ([#124](https://github.com/ibis-project/ibis-bigquery/issues/124)) ([25fc69e](https://github.com/ibis-project/ibis-bigquery/commit/25fc69e11429bbb45f992a5db7bfb4e8615eb34b))
+
+### [2.1.1](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.0...v2.1.1) (2022-03-29)
+
+
+### Bug Fixes
+
+* update to UDFContext for trans_numeric_udf function ([#119](https://github.com/ibis-project/ibis-bigquery/issues/119)) ([daf4da1](https://github.com/ibis-project/ibis-bigquery/commit/daf4da1c1dc2e1002570ff86cc358400d7f6832d))
+
+## [2.1.0](https://github.com/ibis-project/ibis-bigquery/compare/v2.0.0...v2.1.0) (2022-03-15)
+
+
+### Features
+
+* Raise better error message when incorrect dataset is supplied [#113](https://github.com/ibis-project/ibis-bigquery/issues/113) ([#115](https://github.com/ibis-project/ibis-bigquery/issues/115)) ([dc474af](https://github.com/ibis-project/ibis-bigquery/commit/dc474af94bb8590c9acf3ec3f94634f366349580))
+
+
+### Bug Fixes
+
+* avoid deprecated "out-of-band" authentication flow ([#116](https://github.com/ibis-project/ibis-bigquery/issues/116)) ([9dc5808](https://github.com/ibis-project/ibis-bigquery/commit/9dc580800d607b809433bb2a3f2da2ba43b2f679))
+
+
+### Dependencies
+
+* fix minimum ibis-framework dependency ([b8834ce](https://github.com/ibis-project/ibis-bigquery/commit/b8834ce58453a09d790f44eb73f98319f17f84fa))
+
+## [2.0.0](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.1...v2.0.0) (2021-12-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* support ibis 2.x, drop ibis 1.x (#93)
+
+### Features
+
+* support ibis 2.x, drop ibis 1.x ([#93](https://www.github.com/ibis-project/ibis-bigquery/issues/93)) ([780d071](https://www.github.com/ibis-project/ibis-bigquery/commit/780d07168758571d582e8a679e194ac8de33b36b))
+
+
+### Miscellaneous Chores
+
+* release 2.0.0 ([c5c3f24](https://www.github.com/ibis-project/ibis-bigquery/commit/c5c3f2414dbb2046b5e3bdb14204b6440c9a772b))
+
+## [1.0.0](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.1...v1.0.0) (2021-12-02)
+
+### Bug Fixes
+
+* substr fails to compile ([#95](https://github.com/ibis-project/ibis-bigquery/pull/95))) 
+
+## [0.1.1](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.0...v0.1.1) (2021-04-28)
 
 
 ### Dependencies

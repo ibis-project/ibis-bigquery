@@ -12,20 +12,30 @@ import ibis_bigquery
 
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
+IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
+IBIS_3_0_2_VERSION = packaging.version.Version("3.0.2")
 
 
 @pytest.mark.parametrize(
     ("case", "expected", "dtype"),
     [
         (datetime.date(2017, 1, 1), "DATE '2017-01-01'", dt.date),
-        (pd.Timestamp("2017-01-01"), "DATE '2017-01-01'", dt.date,),
+        (
+            pd.Timestamp("2017-01-01"),
+            "DATE '2017-01-01'",
+            dt.date,
+        ),
         ("2017-01-01", "DATE '2017-01-01'", dt.date),
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
-        ("2017-01-01 04:55:59", "TIMESTAMP '2017-01-01 04:55:59'", dt.timestamp,),
+        (
+            "2017-01-01 04:55:59",
+            "TIMESTAMP '2017-01-01 04:55:59'",
+            dt.timestamp,
+        ),
         (
             pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
@@ -36,15 +46,31 @@ IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 def test_literal_date(case, expected, dtype):
     expr = ibis.literal(case, type=dtype).year()
     result = ibis_bigquery.compile(expr)
-    assert result == f"SELECT EXTRACT(year from {expected}) AS `tmp`"
+    expected_name = "tmp" if IBIS_VERSION <= IBIS_3_0_2_VERSION else "year"
+    assert result == f"SELECT EXTRACT(year from {expected}) AS `{expected_name}`"
 
 
 @pytest.mark.parametrize(
     ("case", "expected", "dtype", "strftime_func"),
     [
-        (datetime.date(2017, 1, 1), "DATE '2017-01-01'", dt.date, "FORMAT_DATE",),
-        (pd.Timestamp("2017-01-01"), "DATE '2017-01-01'", dt.date, "FORMAT_DATE",),
-        ("2017-01-01", "DATE '2017-01-01'", dt.date, "FORMAT_DATE",),
+        (
+            datetime.date(2017, 1, 1),
+            "DATE '2017-01-01'",
+            dt.date,
+            "FORMAT_DATE",
+        ),
+        (
+            pd.Timestamp("2017-01-01"),
+            "DATE '2017-01-01'",
+            dt.date,
+            "FORMAT_DATE",
+        ),
+        (
+            "2017-01-01",
+            "DATE '2017-01-01'",
+            dt.date,
+            "FORMAT_DATE",
+        ),
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
             "TIMESTAMP '2017-01-01 04:55:59'",
@@ -82,8 +108,16 @@ def test_day_of_week(case, expected, dtype, strftime_func):
 @pytest.mark.parametrize(
     ("case", "expected", "dtype"),
     [
-        ("test of hash", "'test of hash'", dt.string,),
-        (b"test of hash", "FROM_BASE64('dGVzdCBvZiBoYXNo')", dt.binary,),
+        (
+            "test of hash",
+            "'test of hash'",
+            dt.string,
+        ),
+        (
+            b"test of hash",
+            "FROM_BASE64('dGVzdCBvZiBoYXNo')",
+            dt.binary,
+        ),
     ],
 )
 def test_hash(case, expected, dtype):
@@ -98,14 +132,54 @@ def test_hash(case, expected, dtype):
 @pytest.mark.parametrize(
     ("case", "expected", "how", "dtype"),
     [
-        ("test", "md5('test')", "md5", dt.string,),
-        (b"test", "md5(FROM_BASE64('dGVzdA=='))", "md5", dt.binary,),
-        ("test", "sha1('test')", "sha1", dt.string,),
-        (b"test", "sha1(FROM_BASE64('dGVzdA=='))", "sha1", dt.binary,),
-        ("test", "sha256('test')", "sha256", dt.string,),
-        (b"test", "sha256(FROM_BASE64('dGVzdA=='))", "sha256", dt.binary,),
-        ("test", "sha512('test')", "sha512", dt.string,),
-        (b"test", "sha512(FROM_BASE64('dGVzdA=='))", "sha512", dt.binary,),
+        (
+            "test",
+            "md5('test')",
+            "md5",
+            dt.string,
+        ),
+        (
+            b"test",
+            "md5(FROM_BASE64('dGVzdA=='))",
+            "md5",
+            dt.binary,
+        ),
+        (
+            "test",
+            "sha1('test')",
+            "sha1",
+            dt.string,
+        ),
+        (
+            b"test",
+            "sha1(FROM_BASE64('dGVzdA=='))",
+            "sha1",
+            dt.binary,
+        ),
+        (
+            "test",
+            "sha256('test')",
+            "sha256",
+            dt.string,
+        ),
+        (
+            b"test",
+            "sha256(FROM_BASE64('dGVzdA=='))",
+            "sha256",
+            dt.binary,
+        ),
+        (
+            "test",
+            "sha512('test')",
+            "sha512",
+            dt.string,
+        ),
+        (
+            b"test",
+            "sha512(FROM_BASE64('dGVzdA=='))",
+            "sha512",
+            dt.binary,
+        ),
     ],
 )
 def test_hashbytes(case, expected, how, dtype):
@@ -118,6 +192,37 @@ def test_hashbytes(case, expected, how, dtype):
 
 
 @pytest.mark.parametrize(
+    ("case", "unit", "expected"),
+    (
+        (
+            123456789,
+            "s",
+            "TIMESTAMP_SECONDS(123456789)",
+        ),
+        (
+            -123456789,
+            "ms",
+            "TIMESTAMP_MILLIS(-123456789)",
+        ),
+        (
+            123456789,
+            "us",
+            "TIMESTAMP_MICROS(123456789)",
+        ),
+        (
+            1234567891011,
+            "ns",
+            "TIMESTAMP_MICROS(CAST(ROUND(1234567891011 / 1000) AS INT64))",
+        ),
+    ),
+)
+def test_integer_to_timestamp(case, unit, expected):
+    expr = ibis.literal(case, type=dt.int64).to_timestamp(unit=unit)
+    result = ibis_bigquery.compile(expr)
+    assert result == f"SELECT {expected} AS `tmp`"
+
+
+@pytest.mark.parametrize(
     ("case", "expected", "dtype"),
     [
         (
@@ -125,7 +230,11 @@ def test_hashbytes(case, expected, how, dtype):
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
-        ("2017-01-01 04:55:59", "TIMESTAMP '2017-01-01 04:55:59'", dt.timestamp,),
+        (
+            "2017-01-01 04:55:59",
+            "TIMESTAMP '2017-01-01 04:55:59'",
+            dt.timestamp,
+        ),
         (
             pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
@@ -138,7 +247,8 @@ def test_hashbytes(case, expected, how, dtype):
 def test_literal_timestamp_or_time(case, expected, dtype):
     expr = ibis.literal(case, type=dtype).hour()
     result = ibis_bigquery.compile(expr)
-    assert result == f"SELECT EXTRACT(hour from {expected}) AS `tmp`"
+    expected_name = "tmp" if IBIS_VERSION <= IBIS_3_0_2_VERSION else "hour"
+    assert result == f"SELECT EXTRACT(hour from {expected}) AS `{expected_name}`"
 
 
 def test_projection_fusion_only_peeks_at_immediate_parent():
@@ -238,13 +348,25 @@ def test_binary():
     t = ibis.table([("value", "double")], name="t")
     expr = t["value"].cast(dt.binary).name("value_hash")
     result = ibis_bigquery.compile(expr)
-    expected = """\
-SELECT CAST(`value` AS BYTES) AS `tmp`
+    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "value_hash"
+    expected = f"""\
+SELECT CAST(`value` AS BYTES) AS `{expected_name}`
 FROM t"""
     assert result == expected
 
 
 def test_substring():
+    t = ibis.table([("value", "string")], name="t")
+    expr = t["value"].substr(3, 1)
+    expected = """\
+SELECT substr(`value`, 3 + 1, 1) AS `tmp`
+FROM t"""
+    result = ibis_bigquery.compile(expr)
+
+    assert result == expected
+
+
+def test_substring_neg_length():
     t = ibis.table([("value", "string")], name="t")
     expr = t["value"].substr(3, -1)
     with pytest.raises(Exception) as exception_info:
@@ -259,15 +381,24 @@ def test_bucket():
     buckets = [0, 1, 3]
     expr = t.value.bucket(buckets).name("foo")
     result = ibis_bigquery.compile(expr)
-    expected = """\
+    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "foo"
+    expected = f"""\
+SELECT
+  CASE
+    WHEN (0 <= `value`) AND (`value` < 1) THEN 0
+    WHEN (1 <= `value`) AND (`value` <= 3) THEN 1
+    ELSE CAST(NULL AS INT64)
+  END AS `{expected_name}`
+FROM t"""
+    expected_2 = f"""\
 SELECT
   CASE
     WHEN (`value` >= 0) AND (`value` < 1) THEN 0
     WHEN (`value` >= 1) AND (`value` <= 3) THEN 1
     ELSE CAST(NULL AS INT64)
-  END AS `tmp`
+  END AS `{expected_name}`
 FROM t"""
-    assert result == expected
+    assert result == expected or result == expected_2
 
 
 @pytest.mark.parametrize(
@@ -282,10 +413,11 @@ def test_window_unbounded(kind, begin, end, expected):
     kwargs = {kind: (begin, end)}
     expr = t.a.sum().over(ibis.window(**kwargs))
     result = ibis_bigquery.compile(expr)
+    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "sum"
     assert (
         result
         == f"""\
-SELECT sum(`a`) OVER (ROWS BETWEEN {expected}) AS `tmp`
+SELECT sum(`a`) OVER (ROWS BETWEEN {expected}) AS `{expected_name}`
 FROM t"""
     )
 
@@ -298,13 +430,12 @@ def test_large_compile():
     num_columns = 20
     num_joins = 7
 
-    class MockBigQueryClient(ibis_bigquery.BigQueryClient):
-        def __init__(self):
-            pass
+    class MockBackend(ibis_bigquery.Backend):
+        pass
 
     names = [f"col_{i}" for i in range(num_columns)]
     schema = ibis.Schema(names, ["string"] * num_columns)
-    ibis_client = MockBigQueryClient()
+    ibis_client = MockBackend()
     table = TableExpr(ops.SQLQueryResult("select * from t", schema, ibis_client))
     for _ in range(num_joins):
         table = table.mutate(dummy=ibis.literal(""))

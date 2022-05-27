@@ -70,7 +70,9 @@ def semicolon(f):
 def rewrite_print(node):
     return ast.Call(
         func=ast.Attribute(
-            value=ast.Name(id="console", ctx=ast.Load()), attr="log", ctx=ast.Load(),
+            value=ast.Name(id="console", ctx=ast.Load()),
+            attr="log",
+            ctx=ast.Load(),
         ),
         args=node.args,
         keywords=node.keywords,
@@ -395,7 +397,9 @@ class PythonToJavaScriptTranslator:
     @semicolon
     def visit_AugAssign(self, node):
         return "{} {}= {}".format(
-            self.visit(node.target), self.visit(node.op), self.visit(node.value),
+            self.visit(node.target),
+            self.visit(node.op),
+            self.visit(node.value),
         )
 
     def visit_Module(self, node):
@@ -420,8 +424,7 @@ class PythonToJavaScriptTranslator:
 
     @contextlib.contextmanager
     def local_scope(self):
-        """Assign symbols to local variables.
-        """
+        """Assign symbols to local variables."""
         self.scope = self.scope.new_child()
         try:
             yield self.scope
@@ -444,7 +447,9 @@ class PythonToJavaScriptTranslator:
 
     def visit_IfExp(self, node):
         return "({} ? {} : {})".format(
-            self.visit(node.test), self.visit(node.body), self.visit(node.orelse),
+            self.visit(node.test),
+            self.visit(node.body),
+            self.visit(node.orelse),
         )
 
     def visit_Index(self, node):
@@ -604,6 +609,6 @@ if __name__ == "__main__":
         z = (x if y else b) + 2 + foobar
         foo = Rectangle(1, 2)
         nnn = len(values)
-        return [sum(values) - a + b * y ** -x, z, foo.width, nnn]
+        return [sum(values) - a + b * y**-x, z, foo.width, nnn]
 
     print(my_func.js)

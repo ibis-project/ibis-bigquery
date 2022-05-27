@@ -1,6 +1,7 @@
 import collections
 import datetime
 import decimal
+import re
 
 import ibis
 import ibis.expr.datatypes as dt
@@ -11,13 +12,21 @@ import pandas as pd
 import pandas.testing as tm
 import pytest
 import pytz
-from google.api_core import exceptions
+from pytest import param
 
 import ibis_bigquery
 from ibis_bigquery.client import bigquery_param
 
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
+IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
+
+older_than_3 = pytest.mark.xfail(
+    IBIS_VERSION < IBIS_3_0_VERSION, reason="requires ibis >= 3"
+)
+at_least_3 = pytest.mark.xfail(
+    IBIS_VERSION >= IBIS_3_0_VERSION, reason="requires ibis < 3"
+)
 
 
 def test_table(alltypes):
@@ -57,10 +66,10 @@ def test_list_tables(client):
     assert set(tables) == {"functional_alltypes", "functional_alltypes_parted"}
 
 
-def test_current_database(client):
-    assert client.current_database.name == "testing"
-    assert client.current_database.name == client.dataset_id
-    assert client.current_database.tables == client.list_tables()
+def test_current_database(client, dataset_id):
+    assert client.current_database == dataset_id
+    assert client.current_database == client.dataset_id
+    assert client.list_tables(database=client.current_database) == client.list_tables()
 
 
 def test_database(client):
@@ -85,7 +94,8 @@ FROM t0"""  # noqa
 def test_struct_field_access(struct_table):
     expr = struct_table.struct_col["string_field"]
     result = expr.execute()
-    expected = pd.Series([None, "a"], name="tmp")
+    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "string_field"
+    expected = pd.Series([None, "a"], name=expected_name)
     tm.assert_series_equal(result, expected)
 
 
@@ -203,7 +213,43 @@ def test_different_partition_col_name(monkeypatch, client):
     assert col in parted_alltypes.columns
 
 
-def test_subquery_scalar_params(alltypes, project_id):
+def scalar_params_ibis3(project_id, dataset_id):
+    return f"""\
+SELECT count\\(`foo`\\) AS `count`
+FROM \\(
+  SELECT `string_col`, sum\\(`float_col`\\) AS `foo`
+  FROM \\(
+    SELECT `float_col`, `timestamp_col`, `int_col`, `string_col`
+    FROM `{project_id}\\.{dataset_id}\\.functional_alltypes`
+  \\) t1
+  WHERE `timestamp_col` < @param_\\d+
+  GROUP BY 1
+\\) t0"""
+
+
+def scalar_params_not_ibis3(project_id, dataset_id):
+    return f"""\
+SELECT count\\(`foo`\\) AS `count`
+FROM \\(
+  SELECT `string_col`, sum\\(`float_col`\\) AS `foo`
+  FROM \\(
+    SELECT `float_col`, `timestamp_col`, `int_col`, `string_col`
+    FROM `{project_id}\\.{dataset_id}\\.functional_alltypes`
+    WHERE `timestamp_col` < @my_param
+  \\) t1
+  GROUP BY 1
+\\) t0"""
+
+
+@pytest.mark.parametrize(
+    "expected_fn",
+    [
+        param(scalar_params_ibis3, marks=[older_than_3], id="ibis3"),
+        param(scalar_params_not_ibis3, marks=[at_least_3], id="not_ibis3"),
+    ],
+)
+def test_subquery_scalar_params(alltypes, project_id, dataset_id, expected_fn):
+    expected = expected_fn(project_id, dataset_id)
     t = alltypes
     param = ibis.param("timestamp").name("my_param")
     expr = (
@@ -215,20 +261,7 @@ def test_subquery_scalar_params(alltypes, project_id):
         .foo.count()
     )
     result = expr.compile(params={param: "20140101"})
-    expected = """\
-SELECT count(`foo`) AS `count`
-FROM (
-  SELECT `string_col`, sum(`float_col`) AS `foo`
-  FROM (
-    SELECT `float_col`, `timestamp_col`, `int_col`, `string_col`
-    FROM `{}.testing.functional_alltypes`
-    WHERE `timestamp_col` < @my_param
-  ) t1
-  GROUP BY 1
-) t0""".format(
-        project_id
-    )
-    assert result == expected
+    assert re.match(expected, result) is not None
 
 
 def test_scalar_param_string(alltypes, df):
@@ -456,18 +489,21 @@ def test_raw_sql(client):
     assert client.raw_sql("SELECT 1").fetchall() == [(1,)]
 
 
-def test_scalar_param_scope(alltypes, project_id):
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        param(r"@param_\d+", marks=[older_than_3], id="ibis3"),
+        param("@param", marks=[at_least_3], id="not_ibis3"),
+    ],
+)
+def test_scalar_param_scope(alltypes, project_id, dataset_id, pattern):
     t = alltypes
     param = ibis.param("timestamp")
-    mut = t.mutate(param=param).compile(params={param: "2017-01-01"})
-    assert (
-        mut
-        == """\
-SELECT *, @param AS `param`
-FROM `{}.testing.functional_alltypes`""".format(
-            project_id
-        )
-    )
+    result = t.mutate(param=param).compile(params={param: "2017-01-01"})
+    expected = f"""\
+SELECT \\*, {pattern} AS `param`
+FROM `{project_id}\\.{dataset_id}\\.functional_alltypes`"""
+    assert re.match(expected, result) is not None
 
 
 def test_parted_column_rename(parted_alltypes):
@@ -491,8 +527,8 @@ def test_exists_table(client):
     assert not client.exists_table("footable")
 
 
-def test_exists_database(client):
-    assert client.exists_database("testing")
+def test_exists_database(client, dataset_id):
+    assert client.exists_database(dataset_id)
     assert not client.exists_database("foodataset")
 
 
@@ -538,10 +574,11 @@ def test_exists_table_different_project(client):
 
 
 def test_exists_table_different_project_fully_qualified(client):
-    # TODO(phillipc): Should we raise instead?
     name = "bigquery-public-data.epa_historical_air_quality.co_daily_summary"
-    with pytest.raises(exceptions.BadRequest):
-        client.exists_table(name)
+    assert client.exists_table(name)
+    assert not client.exists_table(
+        "bigquery-public-data.epa_historical_air_quality.foobar"
+    )
 
 
 @pytest.mark.parametrize(
@@ -598,10 +635,12 @@ def test_multiple_project_queries_execute(client):
 
 
 def test_large_timestamp(client):
-    huge_timestamp = datetime.datetime(year=4567, month=1, day=1)
+    huge_timestamp = datetime.datetime(
+        year=4567, month=1, day=1, tzinfo=datetime.timezone.utc
+    )
     expr = ibis.timestamp("4567-01-01 00:00:00")
     result = client.execute(expr)
-    assert result == huge_timestamp
+    assert result.astimezone(datetime.timezone.utc) == huge_timestamp
 
 
 def test_string_to_timestamp(client):
@@ -613,15 +652,16 @@ def test_string_to_timestamp(client):
     assert result == timestamp
 
     timestamp_tz = pd.Timestamp(
-        datetime.datetime(year=2017, month=2, day=6, hour=5), tz=pytz.timezone("UTC"),
+        datetime.datetime(year=2017, month=2, day=6, hour=5),
+        tz=pytz.timezone("UTC"),
     )
     expr_tz = ibis.literal("2017-02-06").to_timestamp("%F", "America/New_York")
     result_tz = client.execute(expr_tz)
     assert result_tz == timestamp_tz
 
 
-def test_client_sql_query(client):
-    expr = client.sql("select * from testing.functional_alltypes limit 20")
+def test_client_sql_query(client, dataset_id):
+    expr = client.sql(f"select * from {dataset_id}.functional_alltypes limit 20")
     result = expr.execute()
     expected = client.table("functional_alltypes").head(20).execute()
     tm.assert_frame_equal(result, expected)
@@ -633,7 +673,7 @@ def test_timestamp_column_parted_is_not_renamed(client):
     assert "PARTITIONTIME" not in t.columns
 
 
-def test_prevent_rewrite(alltypes, project_id):
+def test_prevent_rewrite(alltypes, project_id, dataset_id):
     t = alltypes
     expr = (
         t.groupby(t.string_col)
@@ -646,11 +686,11 @@ def test_prevent_rewrite(alltypes, project_id):
 SELECT *
 FROM (
   SELECT `string_col`, ARRAY_AGG(`double_col`) AS `collected_double`
-  FROM `{}.testing.functional_alltypes`
+  FROM `{}.{}.functional_alltypes`
   GROUP BY 1
 ) t0
 WHERE `string_col` != 'wat'""".format(
-        project_id
+        project_id, dataset_id
     )
     assert result == expected
 
@@ -687,8 +727,9 @@ def test_boolean_reducers(alltypes):
 
 
 def test_column_summary(alltypes):
-    b = alltypes.bool_col.summary()
-    result = b.execute()
+    bool_col_summary = alltypes.bool_col.summary()
+    expr = alltypes.aggregate(bool_col_summary)
+    result = expr.execute()
     assert result.shape == (1, 7)
     assert len(result) == 1
 
@@ -704,6 +745,8 @@ def test_numeric_sum(numeric_table):
     expr = t.numeric_col.sum()
     result = expr.execute()
     assert isinstance(result, decimal.Decimal)
+    compare = result.compare(decimal.Decimal("1.000000001"))
+    assert compare == decimal.Decimal("0")
 
 
 def test_boolean_casting(alltypes):
@@ -711,9 +754,8 @@ def test_boolean_casting(alltypes):
     expr = t.groupby(k=t.string_col.nullif("1") == "9").count()
     result = expr.execute().set_index("k")
     count = result["count"]
-    assert count.loc[False] == 5840
-    assert count.loc[True] == 730
-    assert count.loc[None] == 730
+    assert count.at[False] == 5840
+    assert count.at[True] == 730
 
 
 def test_approx_median(alltypes):
