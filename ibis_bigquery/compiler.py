@@ -1,13 +1,14 @@
 """Module to convert from Ibis expression to SQL string."""
 
 from functools import partial
+from turtle import back
 
 import ibis.expr.lineage as lin
 import regex as re
 import toolz
 from ibis.backends.base.sql import compiler as sql_compiler
 
-from ibis_bigquery import operations, registry, rewrites
+from ibis_bigquery import backports, operations, registry, rewrites
 
 
 class BigQueryUDFDefinition(sql_compiler.DDL):
@@ -31,13 +32,13 @@ class BigQueryUnion(sql_compiler.Union):
         return "UNION DISTINCT" if distinct else "UNION ALL"
 
 
-class BigQueryIntersection(sql_compiler.Intersection):
+class BigQueryIntersection(backports.Intersection):
     """Intersection of tables."""
 
     _keyword = "INTERSECT DISTINCT"
 
 
-class BigQueryDifference(sql_compiler.Difference):
+class BigQueryDifference(backports.Difference):
     """Difference of tables."""
 
     _keyword = "EXCEPT DISTINCT"
