@@ -1,7 +1,6 @@
 """Module to convert from Ibis expression to SQL string."""
 
 from functools import partial
-from turtle import back
 
 import ibis.expr.lineage as lin
 import regex as re
