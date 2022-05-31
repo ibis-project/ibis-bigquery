@@ -3,7 +3,6 @@
 from ibis.backends.base.sql import compiler as sql_compiler
 from ibis.backends.base.sql.compiler import query_builder
 
-
 try:
     Difference = sql_compiler.Difference
 except AttributeError:
