@@ -32,7 +32,7 @@ class BigQueryUnion(sql_compiler.Union):
 
 
 class BigQueryIntersection(sql_compiler.Intersection):
-    """Union of tables."""
+    """Intersection of tables."""
 
     @staticmethod
     def keyword(distinct):
@@ -41,7 +41,7 @@ class BigQueryIntersection(sql_compiler.Intersection):
 
 
 class BigQueryDifference(sql_compiler.Difference):
-    """Union of tables."""
+    """Difference of tables."""
 
     @staticmethod
     def keyword(distinct):
