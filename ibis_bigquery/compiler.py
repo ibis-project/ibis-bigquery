@@ -34,19 +34,13 @@ class BigQueryUnion(sql_compiler.Union):
 class BigQueryIntersection(sql_compiler.Intersection):
     """Intersection of tables."""
 
-    @staticmethod
-    def keyword(distinct):
-        """Use INTERSECT DISTINCT."""
-        return "INTERSECT DISTINCT"
+    _keyword = "INTERSECT DISTINCT"
 
 
 class BigQueryDifference(sql_compiler.Difference):
     """Difference of tables."""
 
-    @staticmethod
-    def keyword(distinct):
-        """Use EXCEPT DISTINCT."""
-        return "EXCEPT DISTINCT"
+    _keyword = "EXCEPT DISTINCT"
 
 
 def find_bigquery_udf(expr):
