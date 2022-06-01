@@ -1,7 +1,7 @@
 """Backports for changes in Ibis."""
 
 import ibis
-import packaging
+import packaging.version
 from ibis.backends.base.sql.compiler import query_builder
 from ibis.backends.base.sql.compiler.base import QueryAST, SetOp
 from ibis.expr import operations as ops
@@ -58,19 +58,19 @@ class Intersection(SetOp):
 # https://github.com/ibis-project/ibis/issues/3863
 if IBIS_VERSION <= IBIS_3_0_2_VERSION:
 
-    @classmethod
+    @classmethod  # type: ignore
     def _make_difference(cls, expr, context):
         # flatten differences so that we can codegen them all at once
         table_exprs = list(query_builder.flatten(expr))
         return cls.difference_class(table_exprs, expr, context=context)
 
-    @classmethod
+    @classmethod  # type: ignore
     def _make_intersect(cls, expr, context):
         # flatten intersections so that we can codegen them all at once
         table_exprs = list(query_builder.flatten(expr))
         return cls.intersect_class(table_exprs, expr, context=context)
 
-    @classmethod
+    @classmethod  # type: ignore
     def _make_union(cls, expr, context):
         # flatten unions so that we can codegen them all at once
         union_info = list(query_builder.flatten_union(expr))
@@ -89,7 +89,7 @@ if IBIS_VERSION <= IBIS_3_0_2_VERSION:
         table_exprs, distincts = union_info[::2], union_info[1::2]
         return cls.union_class(table_exprs, expr, distincts=distincts, context=context)
 
-    @classmethod
+    @classmethod  # type: ignore
     def to_ast(cls, expr, context=None):
         if context is None:
             context = cls.make_context()
