@@ -445,3 +445,28 @@ def test_large_compile():
     table.compile()
     delta = datetime.datetime.now() - start
     assert delta.total_seconds() < 10
+
+
+@pytest.mark.parametrize(
+    ("operation", "sql", "keywords"),
+    [
+        ("union", "UNION ALL", {"distinct": False}),
+        ("union", "UNION DISTINCT", {"distinct": True}),
+        ("intersect", "INTERSECT DISTINCT", {}),
+        ("difference", "EXCEPT DISTINCT", {}),
+    ],
+)
+def test_set_operation(operation, sql, keywords):
+    t0 = ibis.table([("a", "int64")], name="t0")
+    t1 = ibis.table([("a", "int64")], name="t1")
+    expr = getattr(t0, operation)(t1, **keywords)
+    result = ibis_bigquery.compile(expr)
+
+    query = f"""\
+SELECT *
+FROM t0
+{sql}
+SELECT *
+FROM t1"""
+
+    assert result == query

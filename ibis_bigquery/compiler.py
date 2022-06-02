@@ -7,7 +7,7 @@ import regex as re
 import toolz
 from ibis.backends.base.sql import compiler as sql_compiler
 
-from ibis_bigquery import operations, registry, rewrites
+from ibis_bigquery import backports, operations, registry, rewrites
 
 
 class BigQueryUDFDefinition(sql_compiler.DDL):
@@ -29,6 +29,18 @@ class BigQueryUnion(sql_compiler.Union):
     def keyword(distinct):
         """Use disctinct UNION if distinct is True."""
         return "UNION DISTINCT" if distinct else "UNION ALL"
+
+
+class BigQueryIntersection(backports.Intersection):
+    """Intersection of tables."""
+
+    _keyword = "INTERSECT DISTINCT"
+
+
+class BigQueryDifference(backports.Difference):
+    """Difference of tables."""
+
+    _keyword = "EXCEPT DISTINCT"
 
 
 def find_bigquery_udf(expr):
@@ -75,6 +87,8 @@ class BigQueryCompiler(sql_compiler.Compiler):
     translator_class = BigQueryExprTranslator
     table_set_formatter_class = BigQueryTableSetFormatter
     union_class = BigQueryUnion
+    intersect_class = BigQueryIntersection
+    difference_class = BigQueryDifference
 
     @staticmethod
     def _generate_setup_queries(expr, context):
