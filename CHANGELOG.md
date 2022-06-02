@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.0](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.3...v2.2.0) (2022-06-02)
+
+
+### Features
+
+* Add difference and intersect  BigQuery classes ([#88](https://github.com/ibis-project/ibis-bigquery/issues/88)) ([d3acf50](https://github.com/ibis-project/ibis-bigquery/commit/d3acf50de9d8e9015819efe300b4b5f9615c027a))
+* partial support for integer to timestamp with nanosecond units ([#138](https://github.com/ibis-project/ibis-bigquery/issues/138)) ([e3997d4](https://github.com/ibis-project/ibis-bigquery/commit/e3997d42752ec49f4b8c8625097682b27ef4d350))
+
 ### [2.1.3](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.2...v2.1.3) (2022-05-25)
 
 
