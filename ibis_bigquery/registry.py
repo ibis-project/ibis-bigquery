@@ -494,6 +494,8 @@ def _try_register_op(op_name: str, value):
 _try_register_op("BitAnd", reduction("BIT_AND"))
 _try_register_op("BitOr", reduction("BIT_OR"))
 _try_register_op("BitXor", reduction("BIT_XOR"))
+_try_register_op("ApproxCountDistinct", reduction("APPROX_COUNT_DISTINCT"))
+_try_register_op("ApproxMedian", compiles_approx)
 
 
 _invalid_operations = {
