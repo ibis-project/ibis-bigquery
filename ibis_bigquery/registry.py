@@ -486,14 +486,17 @@ def _try_register_op(op_name: str, value):
 
     This allows us to decouple slightly from ibis-framework releases.
     """
-    if hasattr(ops, op_name):
-        OPERATION_REGISTRY[getattr(ops, op_name)] = value
+    op = getattr(ops, op_name, None)
+    if op is not None:
+        OPERATION_REGISTRY[op] = value
 
 
 # 2.x
 _try_register_op("BitAnd", reduction("BIT_AND"))
 _try_register_op("BitOr", reduction("BIT_OR"))
 _try_register_op("BitXor", reduction("BIT_XOR"))
+_try_register_op("ApproxCountDistinct", reduction("APPROX_COUNT_DISTINCT"))
+_try_register_op("ApproxMedian", compiles_approx)
 
 
 _invalid_operations = {
