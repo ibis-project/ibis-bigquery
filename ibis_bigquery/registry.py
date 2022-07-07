@@ -486,8 +486,9 @@ def _try_register_op(op_name: str, value):
 
     This allows us to decouple slightly from ibis-framework releases.
     """
-    if hasattr(ops, op_name):
-        OPERATION_REGISTRY[getattr(ops, op_name)] = value
+    op = getattr(ops, op_name, None)
+    if op is not None:
+        OPERATION_REGISTRY[op] = value
 
 
 # 2.x
