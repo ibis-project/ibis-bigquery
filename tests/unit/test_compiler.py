@@ -470,3 +470,144 @@ SELECT *
 FROM t1"""
 
     assert result == query
+
+
+def test_geospatial_point():
+    t = ibis.table([("lon", "float64"), ("lat", "float64")], name="t")
+    expr = t.lon.point(t.lat)
+    result = ibis_bigquery.compile(expr)
+    query = """\
+SELECT ST_GEOGPOINT(`lon`, `lat`) AS `tmp`
+FROM t"""
+    assert result == query
+
+
+def test_geospatial_azimuth():
+    t = ibis.table([("p0", "point"), ("p1", "point")], name="t")
+    expr = t.p0.azimuth(t.p1)
+    result = ibis_bigquery.compile(expr)
+    query = """\
+SELECT ST_AZIMUTH(`p0`, `p1`) AS `tmp`
+FROM t"""
+    assert result == query
+
+
+def test_geospatial_unary_union():
+    t = ibis.table([("geog", "geography")], name="t")
+    expr = t.geog.unary_union()
+    result = ibis_bigquery.compile(expr)
+    query = """\
+SELECT ST_UNION_AGG(`geog`) AS `union`
+FROM t"""
+    assert result == query
+
+
+@pytest.mark.parametrize(
+    ("operation", "keywords", "function", "function_args"),
+    [
+        ("area", {}, "ST_AREA", []),
+        ("as_binary", {}, "ST_ASBINARY", []),
+        ("as_text", {}, "ST_ASTEXT", ()),
+        ("buffer", {"radius": 5.2}, "ST_BUFFER", ["5.2"]),
+        ("centroid", {}, "ST_CENTROID", []),
+        ("end_point", {}, "ST_ENDPOINT", []),
+        ("geometry_type", {}, "ST_GEOMETRYTYPE", []),
+        ("length", {}, "ST_LENGTH", []),
+        ("n_points", {}, "ST_NUMPOINTS", []),
+        ("perimeter", {}, "ST_PERIMETER", []),
+        ("point_n", {"n": 3}, "ST_POINTN", ["3"]),
+        ("start_point", {}, "ST_STARTPOINT", []),
+    ],
+)
+def test_geospatial_unary(operation, keywords, function, function_args):
+    t = ibis.table([("geog", "geography")], name="t")
+    expr = getattr(t.geog, operation)(**keywords)
+    result = ibis_bigquery.compile(expr)
+    fn_args = ", ".join([""] + function_args) if function_args else ""
+    query = f"""\
+SELECT {function}(`geog`{fn_args}) AS `tmp`
+FROM t"""
+    assert result == query
+
+
+@pytest.mark.parametrize(
+    ("operation", "keywords", "function", "function_args"),
+    [
+        ("contains", {}, "ST_CONTAINS", []),
+        ("covers", {}, "ST_COVERS", []),
+        ("covered_by", {}, "ST_COVEREDBY", []),
+        ("d_within", {"distance": 5.2}, "ST_DWITHIN", ["5.2"]),
+        ("difference", {}, "ST_DIFFERENCE", []),
+        ("disjoint", {}, "ST_DISJOINT", []),
+        ("distance", {}, "ST_DISTANCE", []),
+        ("geo_equals", {}, "ST_EQUALS", []),
+        ("intersection", {}, "ST_INTERSECTION", []),
+        ("intersects", {}, "ST_INTERSECTS", []),
+        ("max_distance", {}, "ST_MAXDISTANCE", []),
+        ("touches", {}, "ST_TOUCHES", []),
+        ("union", {}, "ST_UNION", []),
+        ("within", {}, "ST_WITHIN", []),
+    ],
+)
+def test_geospatial_binary(operation, keywords, function, function_args):
+    t = ibis.table([("geog0", "geography"), ("geog1", "geography")], name="t")
+    expr = getattr(t.geog0, operation)(t.geog1, **keywords)
+    result = ibis_bigquery.compile(expr)
+    fn_args = ", ".join([""] + function_args) if function_args else ""
+    query = f"""\
+SELECT {function}(`geog0`, `geog1`{fn_args}) AS `tmp`
+FROM t"""
+    assert result == query
+
+
+@pytest.mark.parametrize(
+    ("operation", "dimension_name"),
+    [
+        ("x_max", "xmax"),
+        ("x_min", "xmin"),
+        ("y_max", "ymax"),
+        ("y_min", "ymin"),
+    ],
+)
+def test_geospatial_minmax(operation, dimension_name):
+    t = ibis.table([("geog", "geography")], name="t")
+    expr = getattr(t.geog, operation)()
+    result = ibis_bigquery.compile(expr)
+    query = f"""\
+SELECT ST_BOUNDINGBOX(`geog`).{dimension_name} AS `tmp`
+FROM t"""
+    assert result == query
+
+
+@pytest.mark.parametrize(
+    "dimension_name",
+    [
+        "x",
+        "y",
+    ],
+)
+def test_geospatial_xy(dimension_name):
+    t = ibis.table([("pt", "point")], name="t")
+    expr = getattr(t.pt, dimension_name)()
+    result = ibis_bigquery.compile(expr)
+    query = f"""\
+SELECT ST_{dimension_name.upper()}(`pt`) AS `tmp`
+FROM t"""
+    assert result == query
+
+
+def test_geospatial_simplify():
+    t = ibis.table([("geog", "geography")], name="t")
+
+    expr = t.geog.simplify(5.2, preserve_collapsed=False)
+    result = ibis_bigquery.compile(expr)
+    query = f"""\
+SELECT ST_SIMPLIFY(`geog`, 5.2) AS `tmp`
+FROM t"""
+    assert result == query
+
+    expr = t.geog.simplify(5.2, preserve_collapsed=True)
+    with pytest.raises(Exception) as exception_info:
+        ibis_bigquery.compile(expr)
+    expected = "BigQuery simplify does not support preserving collapsed geometries, must pass preserve_collapsed=False"
+    assert str(exception_info.value) == expected
