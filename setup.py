@@ -49,7 +49,7 @@ setuptools.setup(
         "google-cloud-bigquery >=1.12.0,<4.0.0dev",
         "google-cloud-bigquery-storage >=1.0.0,<3.0.0dev",
         "packaging >= 17.0",
-        "pyarrow >=1.0.0,<8.0.0dev",
+        "pyarrow >=1.0.0,<10.0.0dev",
         "pydata-google-auth",
     ],
     classifiers=[
