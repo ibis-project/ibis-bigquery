@@ -20,12 +20,20 @@ from ibis_bigquery.client import bigquery_param
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
+IBIS_3_2_VERSION = packaging.version.Version("3.2.0")
 
-older_than_3 = pytest.mark.xfail(
+xfail_older_than_3 = pytest.mark.xfail(
     IBIS_VERSION < IBIS_3_0_VERSION, reason="requires ibis >= 3"
 )
-at_least_3 = pytest.mark.xfail(
+xfail_older_than_3_and_not_32 = pytest.mark.xfail(
+    not (IBIS_3_0_VERSION <= IBIS_VERSION < IBIS_3_2_VERSION),
+    reason="requires 3.0 < ibis < 3.2",
+)
+xfail_at_least_3 = pytest.mark.xfail(
     IBIS_VERSION >= IBIS_3_0_VERSION, reason="requires ibis < 3"
+)
+xfail_older_than_32 = pytest.mark.xfail(
+    IBIS_VERSION < IBIS_3_2_VERSION, reason="requires ibis >= 3.2"
 )
 
 
@@ -241,11 +249,26 @@ FROM \\(
 \\) t0"""
 
 
+def scalar_params_ibis32(project_id, dataset_id):
+    return f"""\
+SELECT count\\(`foo`\\) AS `count`
+FROM \\(
+  SELECT `string_col`, sum\\(`float_col`\\) AS `foo`
+  FROM \\(
+    SELECT `float_col`, `timestamp_col`, `int_col`, `string_col`
+    FROM `{project_id}\\.{dataset_id}\\.functional_alltypes`
+    WHERE `timestamp_col` < @param_\\d+
+  \\) t1
+  GROUP BY 1
+\\) t0"""
+
+
 @pytest.mark.parametrize(
     "expected_fn",
     [
-        param(scalar_params_ibis3, marks=[older_than_3], id="ibis3"),
-        param(scalar_params_not_ibis3, marks=[at_least_3], id="not_ibis3"),
+        param(scalar_params_ibis3, marks=[xfail_older_than_3_and_not_32], id="ibis3"),
+        param(scalar_params_not_ibis3, marks=[xfail_at_least_3], id="not_ibis3"),
+        param(scalar_params_ibis32, marks=[xfail_older_than_32], id="ibis32"),
     ],
 )
 def test_subquery_scalar_params(alltypes, project_id, dataset_id, expected_fn):
@@ -492,8 +515,8 @@ def test_raw_sql(client):
 @pytest.mark.parametrize(
     "pattern",
     [
-        param(r"@param_\d+", marks=[older_than_3], id="ibis3"),
-        param("@param", marks=[at_least_3], id="not_ibis3"),
+        param(r"@param_\d+", marks=[xfail_older_than_3], id="ibis3"),
+        param("@param", marks=[xfail_at_least_3], id="not_ibis3"),
     ],
 )
 def test_scalar_param_scope(alltypes, project_id, dataset_id, pattern):

@@ -7,6 +7,7 @@ import packaging.version
 import pandas as pd
 import pytest
 from ibis.expr.types import TableExpr
+from pytest import param
 
 import ibis_bigquery
 
@@ -14,6 +15,7 @@ IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
 IBIS_3_0_2_VERSION = packaging.version.Version("3.0.2")
+IBIS_3_1_0_VERSION = packaging.version.Version("3.1.0")
 
 
 @pytest.mark.parametrize(
@@ -251,22 +253,11 @@ def test_literal_timestamp_or_time(case, expected, dtype):
     assert result == f"SELECT EXTRACT(hour from {expected}) AS `{expected_name}`"
 
 
-def test_projection_fusion_only_peeks_at_immediate_parent():
-    if IBIS_VERSION < IBIS_1_4_VERSION:
-        pytest.skip("requires ibis 1.4+")
-    schema = [
-        ("file_date", "timestamp"),
-        ("PARTITIONTIME", "date"),
-        ("val", "int64"),
-    ]
-    table = ibis.table(schema, name="unbound_table")
-    table = table[table.PARTITIONTIME < ibis.date("2017-01-01")]
-    table = table.mutate(file_date=table.file_date.cast("date"))
-    table = table[table.file_date < ibis.date("2017-01-01")]
-    table = table.mutate(XYZ=table.val * 2)
-    expr = table.join(table.view())[table]
-    result = ibis_bigquery.compile(expr)
-    expected = """\
+@pytest.mark.parametrize(
+    "expected",
+    [
+        param(
+            """\
 WITH t0 AS (
   SELECT *
   FROM unbound_table
@@ -287,7 +278,58 @@ t3 AS (
 )
 SELECT t3.*
 FROM t3
-  INNER JOIN t3 t4"""
+  INNER JOIN t3 t4""",
+            marks=[
+                pytest.mark.xfail(
+                    IBIS_VERSION > IBIS_3_1_0_VERSION,
+                    reason="ibis is older than or equal to 3.1.0",
+                )
+            ],
+            id="older_than_or_equal_to_31",
+        ),
+        param(
+            """\
+WITH t0 AS (
+  SELECT *
+  FROM unbound_table
+  WHERE `PARTITIONTIME` < DATE '2017-01-01'
+),
+t1 AS (
+  SELECT CAST(`file_date` AS DATE) AS `file_date`, `PARTITIONTIME`, `val`
+  FROM t0
+  WHERE `file_date` < DATE '2017-01-01'
+),
+t2 AS (
+  SELECT *, `val` * 2 AS `XYZ`
+  FROM t1
+)
+SELECT t2.*
+FROM t2
+  INNER JOIN t2 t3""",
+            marks=[
+                pytest.mark.xfail(
+                    IBIS_VERSION <= IBIS_3_1_0_VERSION,
+                    reason="ibis is newer than 3.1.0",
+                )
+            ],
+            id="newer_than_31",
+        ),
+    ],
+)
+@pytest.mark.skipif(IBIS_VERSION < IBIS_1_4_VERSION, reason="requires ibis 1.4+")
+def test_projection_fusion_only_peeks_at_immediate_parent(expected):
+    schema = [
+        ("file_date", "timestamp"),
+        ("PARTITIONTIME", "date"),
+        ("val", "int64"),
+    ]
+    table = ibis.table(schema, name="unbound_table")
+    table = table[table.PARTITIONTIME < ibis.date("2017-01-01")]
+    table = table.mutate(file_date=table.file_date.cast("date"))
+    table = table[table.file_date < ibis.date("2017-01-01")]
+    table = table.mutate(XYZ=table.val * 2)
+    expr = table.join(table.view())[table]
+    result = ibis_bigquery.compile(expr)
     assert result == expected
 
 

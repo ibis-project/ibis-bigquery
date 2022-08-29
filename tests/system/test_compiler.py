@@ -11,12 +11,19 @@ pytestmark = pytest.mark.bigquery
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_VERSION = packaging.version.Version("1.4.0")
 IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
+IBIS_3_2_VERSION = packaging.version.Version("3.2.0")
 
 older_than_3 = pytest.mark.xfail(
     IBIS_VERSION < IBIS_3_0_VERSION, reason="requires ibis >= 3"
 )
 at_least_3 = pytest.mark.xfail(
     IBIS_VERSION >= IBIS_3_0_VERSION, reason="requires ibis < 3"
+)
+older_than_32 = pytest.mark.xfail(
+    IBIS_VERSION < IBIS_3_2_VERSION, reason="requires ibis >= 3.2"
+)
+at_least_32 = pytest.mark.xfail(
+    IBIS_VERSION >= IBIS_3_2_VERSION, reason="requires ibis < 3.2"
 )
 
 
@@ -129,9 +136,8 @@ FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
 
+@pytest.mark.skipif(IBIS_VERSION <= IBIS_1_VERSION, reason="requires ibis 2.x")
 def test_range_window_function(alltypes, project_id, dataset_id):
-    if IBIS_VERSION <= IBIS_1_VERSION:
-        pytest.skip("requires ibis 2.x")
     t = alltypes
     w = ibis.range_window(preceding=1, following=0, group_by="year", order_by="month")
     expr = t.mutate(two_month_avg=t.float_col.mean().over(w))
@@ -166,9 +172,8 @@ FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
         (ibis.interval(weeks=1), 1000000 * 60 * 60 * 24 * 7),
     ],
 )
+@pytest.mark.skipif(IBIS_VERSION <= IBIS_1_VERSION, reason="requires ibis 2.x")
 def test_trailing_range_window(alltypes, preceding, value, project_id, dataset_id):
-    if IBIS_VERSION <= IBIS_1_VERSION:
-        pytest.skip("requires ibis 2.x")
     t = alltypes
     w = ibis.trailing_range_window(preceding=preceding, order_by=t.timestamp_col)
     expr = t.mutate(win_avg=t.float_col.mean().over(w))
@@ -180,10 +185,9 @@ FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
 
-@pytest.mark.parametrize(("preceding", "value"), [(ibis.interval(years=1), None)])
-def test_trailing_range_window_unsupported(alltypes, preceding, value):
-    if IBIS_VERSION <= IBIS_1_VERSION:
-        pytest.skip("requires ibis 2.x")
+@pytest.mark.parametrize("preceding", [ibis.interval(years=1)])
+@pytest.mark.skipif(IBIS_VERSION <= IBIS_1_VERSION, reason="requires ibis 2.x")
+def test_trailing_range_window_unsupported(alltypes, preceding):
     t = alltypes
     w = ibis.trailing_range_window(preceding=preceding, order_by=t.timestamp_col)
     expr = t.mutate(win_avg=t.float_col.mean().over(w))
@@ -245,20 +249,54 @@ FROM `{project_id}.{dataset_id}.functional_alltypes`"""
     assert result == expected
 
 
-def test_bool_reducers_where(alltypes, project_id, dataset_id):
+@pytest.mark.parametrize(
+    "expected",
+    [
+        param(
+            "CASE WHEN `month` > 6 THEN CAST(`bool_col` AS INT64) ELSE NULL END",
+            id="ibis_not32",
+            marks=at_least_32,
+        ),
+        param(
+            "if(`month` > 6, CAST(`bool_col` AS INT64), NULL)",
+            id="ibis_32",
+            marks=older_than_32,
+        ),
+    ],
+)
+def test_bool_reducers_where_simple(alltypes, expected, project_id, dataset_id):
     b = alltypes.bool_col
     m = alltypes.month
     expr = b.mean(where=m > 6)
     result = expr.compile()
     expected = f"""\
-SELECT avg(CASE WHEN `month` > 6 THEN CAST(`bool_col` AS INT64) ELSE NULL END) AS `mean`
+SELECT avg({expected}) AS `mean`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        param(
+            "CASE WHEN (`month` > 6) AND (`month` < 10) THEN CAST(`bool_col` AS INT64) ELSE NULL END",  # noqa: E501
+            id="ibis_not32",
+            marks=at_least_32,
+        ),
+        param(
+            "if((`month` > 6) AND (`month` < 10), CAST(`bool_col` AS INT64), NULL)",
+            id="ibis_32",
+            marks=older_than_32,
+        ),
+    ],
+)
+def test_bool_reducers_where_conj(alltypes, expected, project_id, dataset_id):
+    b = alltypes.bool_col
+    m = alltypes.month
     expr2 = b.sum(where=((m > 6) & (m < 10)))
     result = expr2.compile()
     expected = f"""\
-SELECT sum(CASE WHEN (`month` > 6) AND (`month` < 10) THEN CAST(`bool_col` AS INT64) ELSE NULL END) AS `sum`
+SELECT sum({expected}) AS `sum`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
@@ -272,12 +310,29 @@ SELECT APPROX_COUNT_DISTINCT(`double_col`) AS `approx_nunique`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""
     assert result == expected
 
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        param(
+            "CASE WHEN `month` > 6 THEN `bool_col` ELSE NULL END",
+            id="ibis_not32",
+            marks=at_least_32,
+        ),
+        param(
+            "if(`month` > 6, `bool_col`, NULL)",
+            id="ibis_32",
+            marks=older_than_32,
+        ),
+    ],
+)
+def test_approx_nunique_cond(alltypes, expected, project_id, dataset_id):
     b = alltypes.bool_col
     m = alltypes.month
     expr2 = b.approx_nunique(where=m > 6)
     result = expr2.compile()
     expected = f"""\
-SELECT APPROX_COUNT_DISTINCT(CASE WHEN `month` > 6 THEN `bool_col` ELSE NULL END) AS `approx_nunique`
+SELECT APPROX_COUNT_DISTINCT({expected}) AS `approx_nunique`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
@@ -291,18 +346,35 @@ SELECT APPROX_QUANTILES(`double_col`, 2)[OFFSET(1)] AS `approx_median`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""
     assert result == expected
 
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        param(
+            "CASE WHEN `month` > 6 THEN `double_col` ELSE NULL END",
+            id="ibis_not32",
+            marks=at_least_32,
+        ),
+        param(
+            "if(`month` > 6, `double_col`, NULL)",
+            id="ibis_32",
+            marks=older_than_32,
+        ),
+    ],
+)
+def test_approx_median_cond(alltypes, expected, project_id, dataset_id):
     m = alltypes.month
+    d = alltypes.double_col
     expr2 = d.approx_median(where=m > 6)
     result = expr2.compile()
     expected = f"""\
-SELECT APPROX_QUANTILES(CASE WHEN `month` > 6 THEN `double_col` ELSE NULL END, 2)[OFFSET(1)] AS `approx_median`
+SELECT APPROX_QUANTILES({expected}, 2)[OFFSET(1)] AS `approx_median`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
 
+@pytest.mark.skipif(IBIS_VERSION <= IBIS_1_VERSION, reason="requires ibis 2.x")
 def test_bit_and(alltypes, project_id, dataset_id):
-    if IBIS_VERSION <= IBIS_1_VERSION:
-        pytest.skip("requires ibis 2.x")
     i = alltypes.int_col
     expr = i.bit_and()
     result = expr.compile()
@@ -311,18 +383,36 @@ SELECT BIT_AND(`int_col`) AS `bit_and`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""
     assert result == expected
 
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        param(
+            "CASE WHEN `bigint_col` > 6 THEN `int_col` ELSE NULL END",
+            id="ibis_not32",
+            marks=at_least_32,
+        ),
+        param(
+            "if(`bigint_col` > 6, `int_col`, NULL)",
+            id="ibis_32",
+            marks=older_than_32,
+        ),
+    ],
+)
+@pytest.mark.skipif(IBIS_VERSION <= IBIS_1_VERSION, reason="requires ibis 2.x")
+def test_bit_and_cond(alltypes, expected, project_id, dataset_id):
     b = alltypes.bigint_col
+    i = alltypes.int_col
     expr2 = i.bit_and(where=b > 6)
     result = expr2.compile()
     expected = f"""\
-SELECT BIT_AND(CASE WHEN `bigint_col` > 6 THEN `int_col` ELSE NULL END) AS `bit_and`
+SELECT BIT_AND({expected}) AS `bit_and`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
 
+@pytest.mark.skipif(IBIS_VERSION <= IBIS_1_VERSION, reason="requires ibis 2.x")
 def test_bit_or(alltypes, project_id, dataset_id):
-    if IBIS_VERSION <= IBIS_1_VERSION:
-        pytest.skip("requires ibis 2.x")
     i = alltypes.int_col
     expr = i.bit_or()
     result = expr.compile()
@@ -331,18 +421,36 @@ SELECT BIT_OR(`int_col`) AS `bit_or`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""
     assert result == expected
 
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        param(
+            "CASE WHEN `bigint_col` > 6 THEN `int_col` ELSE NULL END",
+            id="ibis_not32",
+            marks=at_least_32,
+        ),
+        param(
+            "if(`bigint_col` > 6, `int_col`, NULL)",
+            id="ibis_32",
+            marks=older_than_32,
+        ),
+    ],
+)
+@pytest.mark.skipif(IBIS_VERSION <= IBIS_1_VERSION, reason="requires ibis 2.x")
+def test_bit_or_cond(alltypes, expected, project_id, dataset_id):
     b = alltypes.bigint_col
+    i = alltypes.int_col
     expr2 = i.bit_or(where=b > 6)
     result = expr2.compile()
     expected = f"""\
-SELECT BIT_OR(CASE WHEN `bigint_col` > 6 THEN `int_col` ELSE NULL END) AS `bit_or`
+SELECT BIT_OR({expected}) AS `bit_or`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
 
+@pytest.mark.skipif(IBIS_VERSION <= IBIS_1_VERSION, reason="requires ibis 2.x")
 def test_bit_xor(alltypes, project_id, dataset_id):
-    if IBIS_VERSION <= IBIS_1_VERSION:
-        pytest.skip("requires ibis 2.x")
     i = alltypes.int_col
     expr = i.bit_xor()
     result = expr.compile()
@@ -351,11 +459,30 @@ SELECT BIT_XOR(`int_col`) AS `bit_xor`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""
     assert result == expected
 
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        param(
+            "CASE WHEN `bigint_col` > 6 THEN `int_col` ELSE NULL END",
+            id="ibis_not32",
+            marks=at_least_32,
+        ),
+        param(
+            "if(`bigint_col` > 6, `int_col`, NULL)",
+            id="ibis_32",
+            marks=older_than_32,
+        ),
+    ],
+)
+@pytest.mark.skipif(IBIS_VERSION <= IBIS_1_VERSION, reason="requires ibis 2.x")
+def test_bit_xor_cond(alltypes, expected, project_id, dataset_id):
     b = alltypes.bigint_col
+    i = alltypes.int_col
     expr2 = i.bit_xor(where=b > 6)
     result = expr2.compile()
     expected = f"""\
-SELECT BIT_XOR(CASE WHEN `bigint_col` > 6 THEN `int_col` ELSE NULL END) AS `bit_xor`
+SELECT BIT_XOR({expected}) AS `bit_xor`
 FROM `{project_id}.{dataset_id}.functional_alltypes`"""  # noqa: E501
     assert result == expected
 
