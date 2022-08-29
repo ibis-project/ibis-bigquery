@@ -474,7 +474,7 @@ FROM t1"""
 
 def test_geospatial_point():
     t = ibis.table([("lon", "float64"), ("lat", "float64")], name="t")
-    expr = t.lon.point(t.lat)
+    expr = ibis.geo_point(t.lon, t.lat)
     result = ibis_bigquery.compile(expr)
     query = """\
 SELECT ST_GEOGPOINT(`lon`, `lat`) AS `tmp`
@@ -601,7 +601,7 @@ def test_geospatial_simplify():
 
     expr = t.geog.simplify(5.2, preserve_collapsed=False)
     result = ibis_bigquery.compile(expr)
-    query = f"""\
+    query = """\
 SELECT ST_SIMPLIFY(`geog`, 5.2) AS `tmp`
 FROM t"""
     assert result == query
