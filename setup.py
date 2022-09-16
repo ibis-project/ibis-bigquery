@@ -51,6 +51,7 @@ setuptools.setup(
         "packaging >= 17.0",
         "pyarrow >=1.0.0,<10.0.0dev",
         "pydata-google-auth",
+        "sqlalchemy>=1.4,<2.0",
     ],
     classifiers=[
         release_status,
