@@ -34,16 +34,12 @@ jobs:
         path: ibis_bigquery
 
     - name: set up python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: checkout ibis
-      uses: actions/checkout@v3
-      with:
-        repository: ibis-project/ibis
-        path: ibis
-        fetch-depth: 0
+    - name: setup virtualenv
+      uses: syphar/restore-virtualenv@v1
 
     - name: install dependencies (ibis ${{ matrix.ibis_version }})
       env:
@@ -57,6 +53,7 @@ jobs:
         GCLOUD_KEY_PASSPHRASE: ${{ secrets.GCLOUD_KEY_PASSPHRASE }}
 
     - name: run tests
-      run: GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/gcloud-service-key.json" python -m pytest ./ibis_bigquery/tests/system --save-dataset
+      working-directory: ibis_bigquery
+      run: GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/gcloud-service-key.json" python -m pytest ./tests/system --save-dataset
       env:
         GOOGLE_BIGQUERY_PROJECT_ID: ibis-gbq
