@@ -305,6 +305,26 @@ def _timestamp_op(func, units):
     return _formatter
 
 
+def _geo_boundingbox(dimension_name):
+    def _formatter(translator, expr):
+        geog = expr.op().args[0]
+        geog_formatted = translator.translate(geog)
+        return f"ST_BOUNDINGBOX({geog_formatted}).{dimension_name}"
+
+    return _formatter
+
+
+def _geo_simplify(translator, expr):
+    geog, tolerance, preserve_collapsed = expr.op().args
+    if preserve_collapsed.op().value:
+        raise com.UnsupportedOperationError(
+            "BigQuery simplify does not support preserving collapsed geometries, "
+            "must pass preserve_collapsed=False"
+        )
+    geog, tolerance = map(translator.translate, (geog, tolerance))
+    return f"ST_SIMPLIFY({geog}, {tolerance})"
+
+
 STRFTIME_FORMAT_FUNCTIONS = {
     dt.Date: "DATE",
     dt.Time: "TIME",
@@ -478,6 +498,44 @@ OPERATION_REGISTRY = {
     # ops.ArrayRepeat: _array_repeat,
     # ops.ArraySlice: _array_slice,
     ops.Arbitrary: _arbitrary,
+    # Geospatial Columnar
+    ops.GeoUnaryUnion: unary("ST_UNION_AGG"),
+    # Geospatial
+    ops.GeoArea: unary("ST_AREA"),
+    ops.GeoAsBinary: unary("ST_ASBINARY"),
+    ops.GeoAsText: unary("ST_ASTEXT"),
+    ops.GeoAzimuth: fixed_arity("ST_AZIMUTH", 2),
+    ops.GeoBuffer: fixed_arity("ST_BUFFER", 2),
+    ops.GeoCentroid: unary("ST_CENTROID"),
+    ops.GeoContains: fixed_arity("ST_CONTAINS", 2),
+    ops.GeoCovers: fixed_arity("ST_COVERS", 2),
+    ops.GeoCoveredBy: fixed_arity("ST_COVEREDBY", 2),
+    ops.GeoDWithin: fixed_arity("ST_DWITHIN", 3),
+    ops.GeoDifference: fixed_arity("ST_DIFFERENCE", 2),
+    ops.GeoDisjoint: fixed_arity("ST_DISJOINT", 2),
+    ops.GeoDistance: fixed_arity("ST_DISTANCE", 2),
+    ops.GeoEndPoint: unary("ST_ENDPOINT"),
+    ops.GeoEquals: fixed_arity("ST_EQUALS", 2),
+    ops.GeoGeometryType: unary("ST_GEOMETRYTYPE"),
+    ops.GeoIntersection: fixed_arity("ST_INTERSECTION", 2),
+    ops.GeoIntersects: fixed_arity("ST_INTERSECTS", 2),
+    ops.GeoLength: unary("ST_LENGTH"),
+    ops.GeoMaxDistance: fixed_arity("ST_MAXDISTANCE", 2),
+    ops.GeoNPoints: unary("ST_NUMPOINTS"),
+    ops.GeoPerimeter: unary("ST_PERIMETER"),
+    ops.GeoPoint: fixed_arity("ST_GEOGPOINT", 2),
+    ops.GeoPointN: fixed_arity("ST_POINTN", 2),
+    ops.GeoSimplify: _geo_simplify,
+    ops.GeoStartPoint: unary("ST_STARTPOINT"),
+    ops.GeoTouches: fixed_arity("ST_TOUCHES", 2),
+    ops.GeoUnion: fixed_arity("ST_UNION", 2),
+    ops.GeoWithin: fixed_arity("ST_WITHIN", 2),
+    ops.GeoX: unary("ST_X"),
+    ops.GeoXMax: _geo_boundingbox("xmax"),
+    ops.GeoXMin: _geo_boundingbox("xmin"),
+    ops.GeoY: unary("ST_Y"),
+    ops.GeoYMax: _geo_boundingbox("ymax"),
+    ops.GeoYMin: _geo_boundingbox("ymin"),
 }
 
 
