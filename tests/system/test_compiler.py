@@ -70,6 +70,15 @@ FROM `{project_id}.{dataset_id}.functional_alltypes`"""
     assert result == expected
 
 
+def test_floor_divide(alltypes, project_id, dataset_id):
+    expr = alltypes.double_col // 0
+    result = expr.compile()
+    expected = f"""\
+SELECT CAST(FLOOR(IEEE_DIVIDE(`double_col`, 0)) AS INT64) AS `tmp`
+FROM `{project_id}.{dataset_id}.functional_alltypes`"""
+    assert result == expected
+
+
 def test_identical_to(alltypes, project_id, dataset_id):
     t = alltypes
     pred = t.string_col.identical_to("a") & t.date_string_col.identical_to("b")
