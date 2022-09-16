@@ -2,7 +2,8 @@ name: System Tests
 
 on:
   push:
-    branches: main
+    branches:
+      - v1
   schedule:
     - cron: 0 2 * * *
 
@@ -15,14 +16,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.7", "3.8", "3.9"]
         ibis_version: ["github"]
-        include:
           - python_version: "3.7"
             "ibis_version": "1.2.0"
-          - python_version: "3.7"
-            "ibis_version":  "1.3.0"
           - python_version: "3.8"
+            "ibis_version":  "1.3.0"
+          - python_version: "3.10"
             "ibis_version": "1.4.0"
 
     steps:
@@ -51,4 +50,4 @@ jobs:
         GCLOUD_KEY_PASSPHRASE: ${{ secrets.GCLOUD_KEY_PASSPHRASE }}
 
     - name: run tests
-      run: GOOGLE_BIGQUERY_PROJECT_ID="ibis-gbq" GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/gcloud-service-key.json" python -m pytest tests/system
+      run: GOOGLE_BIGQUERY_PROJECT_ID="ibis-gbq" GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/gcloud-service-key.json" python -m pytest tests/system --save-dataset

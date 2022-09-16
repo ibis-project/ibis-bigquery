@@ -15,23 +15,19 @@ IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
 
 
 @pytest.mark.parametrize(
-    ('case', 'expected', 'dtype'),
+    ("case", "expected", "dtype"),
     [
         (datetime.date(2017, 1, 1), "DATE '2017-01-01'", dt.date),
-        (pd.Timestamp('2017-01-01'), "DATE '2017-01-01'", dt.date,),
-        ('2017-01-01', "DATE '2017-01-01'", dt.date),
+        (pd.Timestamp("2017-01-01"), "DATE '2017-01-01'", dt.date,),
+        ("2017-01-01", "DATE '2017-01-01'", dt.date),
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
+        ("2017-01-01 04:55:59", "TIMESTAMP '2017-01-01 04:55:59'", dt.timestamp,),
         (
-            '2017-01-01 04:55:59',
-            "TIMESTAMP '2017-01-01 04:55:59'",
-            dt.timestamp,
-        ),
-        (
-            pd.Timestamp('2017-01-01 04:55:59'),
+            pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
@@ -44,38 +40,28 @@ def test_literal_date(case, expected, dtype):
 
 
 @pytest.mark.parametrize(
-    ('case', 'expected', 'dtype', 'strftime_func'),
+    ("case", "expected", "dtype", "strftime_func"),
     [
-        (
-            datetime.date(2017, 1, 1),
-            "DATE '2017-01-01'",
-            dt.date,
-            'FORMAT_DATE',
-        ),
-        (
-            pd.Timestamp('2017-01-01'),
-            "DATE '2017-01-01'",
-            dt.date,
-            'FORMAT_DATE',
-        ),
-        ('2017-01-01', "DATE '2017-01-01'", dt.date, 'FORMAT_DATE',),
+        (datetime.date(2017, 1, 1), "DATE '2017-01-01'", dt.date, "FORMAT_DATE",),
+        (pd.Timestamp("2017-01-01"), "DATE '2017-01-01'", dt.date, "FORMAT_DATE",),
+        ("2017-01-01", "DATE '2017-01-01'", dt.date, "FORMAT_DATE",),
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
-            'FORMAT_TIMESTAMP',
+            "FORMAT_TIMESTAMP",
         ),
         (
-            '2017-01-01 04:55:59',
+            "2017-01-01 04:55:59",
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
-            'FORMAT_TIMESTAMP',
+            "FORMAT_TIMESTAMP",
         ),
         (
-            pd.Timestamp('2017-01-01 04:55:59'),
+            pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
-            'FORMAT_TIMESTAMP',
+            "FORMAT_TIMESTAMP",
         ),
     ],
 )
@@ -83,18 +69,12 @@ def test_day_of_week(case, expected, dtype, strftime_func):
     date_var = ibis.literal(case, type=dtype)
     expr_index = date_var.day_of_week.index()
     result = ibis_bigquery.compile(expr_index)
-    assert (
-        result
-        == f"SELECT MOD(EXTRACT(DAYOFWEEK FROM {expected}) + 5, 7) AS `tmp`"
-    )
+    assert result == f"SELECT MOD(EXTRACT(DAYOFWEEK FROM {expected}) + 5, 7) AS `tmp`"
 
     expr_name = date_var.day_of_week.full_name()
     result = ibis_bigquery.compile(expr_name)
-    if strftime_func == 'FORMAT_TIMESTAMP':
-        assert (
-            result
-            == f"SELECT {strftime_func}('%A', {expected}, 'UTC') AS `tmp`"
-        )
+    if strftime_func == "FORMAT_TIMESTAMP":
+        assert result == f"SELECT {strftime_func}('%A', {expected}, 'UTC') AS `tmp`"
     else:
         assert result == f"SELECT {strftime_func}('%A', {expected}) AS `tmp`"
 
@@ -138,25 +118,21 @@ def test_hashbytes(case, expected, how, dtype):
 
 
 @pytest.mark.parametrize(
-    ('case', 'expected', 'dtype'),
+    ("case", "expected", "dtype"),
     [
         (
             datetime.datetime(2017, 1, 1, 4, 55, 59),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
+        ("2017-01-01 04:55:59", "TIMESTAMP '2017-01-01 04:55:59'", dt.timestamp,),
         (
-            '2017-01-01 04:55:59',
-            "TIMESTAMP '2017-01-01 04:55:59'",
-            dt.timestamp,
-        ),
-        (
-            pd.Timestamp('2017-01-01 04:55:59'),
+            pd.Timestamp("2017-01-01 04:55:59"),
             "TIMESTAMP '2017-01-01 04:55:59'",
             dt.timestamp,
         ),
         (datetime.time(4, 55, 59), "TIME '04:55:59'", dt.time),
-        ('04:55:59', "TIME '04:55:59'", dt.time),
+        ("04:55:59", "TIME '04:55:59'", dt.time),
     ],
 )
 def test_literal_timestamp_or_time(case, expected, dtype):
@@ -169,14 +145,14 @@ def test_projection_fusion_only_peeks_at_immediate_parent():
     if IBIS_VERSION < IBIS_1_4_VERSION:
         pytest.skip("requires ibis 1.4+")
     schema = [
-        ('file_date', 'timestamp'),
-        ('PARTITIONTIME', 'date'),
-        ('val', 'int64'),
+        ("file_date", "timestamp"),
+        ("PARTITIONTIME", "date"),
+        ("val", "int64"),
     ]
-    table = ibis.table(schema, name='unbound_table')
-    table = table[table.PARTITIONTIME < ibis.date('2017-01-01')]
-    table = table.mutate(file_date=table.file_date.cast('date'))
-    table = table[table.file_date < ibis.date('2017-01-01')]
+    table = ibis.table(schema, name="unbound_table")
+    table = table[table.PARTITIONTIME < ibis.date("2017-01-01")]
+    table = table.mutate(file_date=table.file_date.cast("date"))
+    table = table[table.file_date < ibis.date("2017-01-01")]
     table = table.mutate(XYZ=table.val * 2)
     expr = table.join(table.view())[table]
     result = ibis_bigquery.compile(expr)
@@ -206,32 +182,32 @@ FROM t3
 
 
 @pytest.mark.parametrize(
-    ('unit', 'expected_unit', 'expected_func'),
+    ("unit", "expected_unit", "expected_func"),
     [
-        ('Y', 'YEAR', 'TIMESTAMP'),
-        ('Q', 'QUARTER', 'TIMESTAMP'),
-        ('M', 'MONTH', 'TIMESTAMP'),
-        ('W', 'WEEK', 'TIMESTAMP'),
-        ('D', 'DAY', 'TIMESTAMP'),
-        ('h', 'HOUR', 'TIMESTAMP'),
-        ('m', 'MINUTE', 'TIMESTAMP'),
-        ('s', 'SECOND', 'TIMESTAMP'),
-        ('ms', 'MILLISECOND', 'TIMESTAMP'),
-        ('us', 'MICROSECOND', 'TIMESTAMP'),
-        ('Y', 'YEAR', 'DATE'),
-        ('Q', 'QUARTER', 'DATE'),
-        ('M', 'MONTH', 'DATE'),
-        ('W', 'WEEK', 'DATE'),
-        ('D', 'DAY', 'DATE'),
-        ('h', 'HOUR', 'TIME'),
-        ('m', 'MINUTE', 'TIME'),
-        ('s', 'SECOND', 'TIME'),
-        ('ms', 'MILLISECOND', 'TIME'),
-        ('us', 'MICROSECOND', 'TIME'),
+        ("Y", "YEAR", "TIMESTAMP"),
+        ("Q", "QUARTER", "TIMESTAMP"),
+        ("M", "MONTH", "TIMESTAMP"),
+        ("W", "WEEK", "TIMESTAMP"),
+        ("D", "DAY", "TIMESTAMP"),
+        ("h", "HOUR", "TIMESTAMP"),
+        ("m", "MINUTE", "TIMESTAMP"),
+        ("s", "SECOND", "TIMESTAMP"),
+        ("ms", "MILLISECOND", "TIMESTAMP"),
+        ("us", "MICROSECOND", "TIMESTAMP"),
+        ("Y", "YEAR", "DATE"),
+        ("Q", "QUARTER", "DATE"),
+        ("M", "MONTH", "DATE"),
+        ("W", "WEEK", "DATE"),
+        ("D", "DAY", "DATE"),
+        ("h", "HOUR", "TIME"),
+        ("m", "MINUTE", "TIME"),
+        ("s", "SECOND", "TIME"),
+        ("ms", "MILLISECOND", "TIME"),
+        ("us", "MICROSECOND", "TIME"),
     ],
 )
 def test_temporal_truncate(unit, expected_unit, expected_func):
-    t = ibis.table([('a', getattr(dt, expected_func.lower()))], name='t')
+    t = ibis.table([("a", getattr(dt, expected_func.lower()))], name="t")
     expr = t.a.truncate(unit)
     result = ibis_bigquery.compile(expr)
     expected = f"""\
@@ -240,9 +216,9 @@ FROM t"""
     assert result == expected
 
 
-@pytest.mark.parametrize('kind', ['date', 'time'])
+@pytest.mark.parametrize("kind", ["date", "time"])
 def test_extract_temporal_from_timestamp(kind):
-    t = ibis.table([('ts', dt.timestamp)], name='t')
+    t = ibis.table([("ts", dt.timestamp)], name="t")
     expr = getattr(t.ts, kind)()
     result = ibis_bigquery.compile(expr)
     expected = f"""\
@@ -254,12 +230,12 @@ FROM t"""
 def test_now():
     expr = ibis.now()
     result = ibis_bigquery.compile(expr)
-    expected = 'SELECT CURRENT_TIMESTAMP() AS `tmp`'
+    expected = "SELECT CURRENT_TIMESTAMP() AS `tmp`"
     assert result == expected
 
 
 def test_binary():
-    t = ibis.table([('value', 'double')], name='t')
+    t = ibis.table([("value", "double")], name="t")
     expr = t["value"].cast(dt.binary).name("value_hash")
     result = ibis_bigquery.compile(expr)
     expected = """\
@@ -269,19 +245,30 @@ FROM t"""
 
 
 def test_substring():
-    t = ibis.table([('value', 'string')], name='t')
+    t = ibis.table([("value", "string")], name="t")
+    expr = t["value"].substr(3, 1)
+    expected = """\
+SELECT substr(`value`, 3 + 1, 1) AS `tmp`
+FROM t"""
+    result = ibis_bigquery.compile(expr)
+
+    assert result == expected
+
+
+def test_substring_neg_length():
+    t = ibis.table([("value", "string")], name="t")
     expr = t["value"].substr(3, -1)
     with pytest.raises(Exception) as exception_info:
         ibis_bigquery.compile(expr)
 
-    expected = 'Length parameter should not be a negative value.'
+    expected = "Length parameter should not be a negative value."
     assert str(exception_info.value) == expected
 
 
 def test_bucket():
-    t = ibis.table([('value', 'double')], name='t')
+    t = ibis.table([("value", "double")], name="t")
     buckets = [0, 1, 3]
-    expr = t.value.bucket(buckets).name('foo')
+    expr = t.value.bucket(buckets).name("foo")
     result = ibis_bigquery.compile(expr)
     expected = """\
 SELECT
@@ -295,14 +282,14 @@ FROM t"""
 
 
 @pytest.mark.parametrize(
-    ('kind', 'begin', 'end', 'expected'),
+    ("kind", "begin", "end", "expected"),
     [
-        ('preceding', None, 1, 'UNBOUNDED PRECEDING AND 1 PRECEDING'),
-        ('following', 1, None, '1 FOLLOWING AND UNBOUNDED FOLLOWING'),
+        ("preceding", None, 1, "UNBOUNDED PRECEDING AND 1 PRECEDING"),
+        ("following", 1, None, "1 FOLLOWING AND UNBOUNDED FOLLOWING"),
     ],
 )
 def test_window_unbounded(kind, begin, end, expected):
-    t = ibis.table([('a', 'int64')], name='t')
+    t = ibis.table([("a", "int64")], name="t")
     kwargs = {kind: (begin, end)}
     expr = t.a.sum().over(ibis.window(**kwargs))
     result = ibis_bigquery.compile(expr)
@@ -327,11 +314,9 @@ def test_large_compile():
             pass
 
     names = [f"col_{i}" for i in range(num_columns)]
-    schema = ibis.Schema(names, ['string'] * num_columns)
+    schema = ibis.Schema(names, ["string"] * num_columns)
     ibis_client = MockBigQueryClient()
-    table = TableExpr(
-        ops.SQLQueryResult("select * from t", schema, ibis_client)
-    )
+    table = TableExpr(ops.SQLQueryResult("select * from t", schema, ibis_client))
     for _ in range(num_joins):
         table = table.mutate(dummy=ibis.literal(""))
         table = table.left_join(table, ["dummy"])[[table]]

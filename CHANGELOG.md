@@ -1,6 +1,12 @@
 # Changelog
 
-### [0.1.1](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.0...v0.1.1) (2021-04-28)
+## [1.0.0](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.1...v1.0.0) (2021-12-02)
+
+### Bug Fixes
+
+* substr fails to compile ([#95](https://github.com/ibis-project/ibis-bigquery/pull/95))) 
+
+## [0.1.1](https://www.github.com/ibis-project/ibis-bigquery/compare/v0.1.0...v0.1.1) (2021-04-28)
 
 
 ### Dependencies

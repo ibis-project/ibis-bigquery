@@ -1,14 +1,16 @@
-name: ibis-bigquery-dev
+name: ibis-v1-bigquery-dev
 channels:
 - conda-forge
 dependencies:
 
 # core
-- ibis-framework  # TODO: require Ibis 2.0 when it's released
+- ibis-framework <=2.0.0dev
 - google-cloud-bigquery-core >=1.12.0,<3.0.0dev
 - pydata-google-auth
+- sqlalchemy=1.3.23
 
 # dev
+- black=19.10b0 # Same as ibis
 - pytest
 - pytest-cov
 - pytest-mock

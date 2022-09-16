@@ -2,9 +2,9 @@ name: Main
 
 on:
   push:
-    branches: main
+    branches: v1
   pull_request:
-    branches: main
+    branches: v1
   schedule:
     - cron: 0 3 * * *
 
@@ -33,6 +33,10 @@ jobs:
       run: mypy --ignore-missing-imports .
       if: always()
 
+    - name: black
+      run: black --check .
+      if: always()
+
     # TODO: don't ignore pydocstyle
     # https://github.com/ibis-project/ibis-bigquery/issues/13
     # - name: pydocstyle
@@ -40,7 +44,7 @@ jobs:
     #   if: always()
 
     - name: isort
-      run: isort --check-only .
+      run: isort --profile black --check-only .
       if: always()
 
   unit-tests:
@@ -49,14 +53,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.7", "3.8", "3.9"]
-        ibis_version: ["github"]
         include:
           - python_version: "3.7"
             "ibis_version": "1.2.0"
-          - python_version: "3.7"
-            "ibis_version":  "1.3.0"
           - python_version: "3.8"
+            "ibis_version":  "1.3.0"
+          - python_version: "3.9"
+            "ibis_version": "1.4.0"
+          - python_version: "3.10"
             "ibis_version": "1.4.0"
 
     steps:

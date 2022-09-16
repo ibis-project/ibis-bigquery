@@ -27,7 +27,7 @@ class SymbolTable(ChainMap):
     def __getitem__(self, key):
         if key not in self:
             self[key] = key
-            return 'let {}'.format(key)
+            return "let {}".format(key)
         return key
 
 
@@ -47,8 +47,8 @@ def indent(lines, spaces=4):
     """
     if isinstance(lines, str):
         text = [lines]
-    text = '\n'.join(lines)
-    return textwrap.indent(text, ' ' * spaces)
+    text = "\n".join(lines)
+    return textwrap.indent(text, " " * spaces)
 
 
 def semicolon(f):
@@ -61,45 +61,43 @@ def semicolon(f):
 
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        return f(*args, **kwargs) + ';'
+        return f(*args, **kwargs) + ";"
 
     return wrapper
 
 
-@rewrite.register(ast.Call(func=ast.Name(id='print')))
+@rewrite.register(ast.Call(func=ast.Name(id="print")))
 def rewrite_print(node):
     return ast.Call(
         func=ast.Attribute(
-            value=ast.Name(id='console', ctx=ast.Load()),
-            attr='log',
-            ctx=ast.Load(),
+            value=ast.Name(id="console", ctx=ast.Load()), attr="log", ctx=ast.Load(),
         ),
         args=node.args,
         keywords=node.keywords,
     )
 
 
-@rewrite.register(ast.Call(func=ast.Name(id='len')))
+@rewrite.register(ast.Call(func=ast.Name(id="len")))
 def rewrite_len(node):
     assert len(node.args) == 1
-    return ast.Attribute(value=node.args[0], attr='length', ctx=ast.Load())
+    return ast.Attribute(value=node.args[0], attr="length", ctx=ast.Load())
 
 
-@rewrite.register(ast.Call(func=ast.Attribute(attr='append')))
+@rewrite.register(ast.Call(func=ast.Attribute(attr="append")))
 def rewrite_append(node):
     return ast.Call(
-        func=ast.Attribute(value=node.func.value, attr='push', ctx=ast.Load()),
+        func=ast.Attribute(value=node.func.value, attr="push", ctx=ast.Load()),
         args=node.args,
         keywords=node.keywords,
     )
 
 
 @rewrite.register(
-    ast.Call(func=ast.Attribute(value=ast.Name(id='Array'), attr='from_'))
+    ast.Call(func=ast.Attribute(value=ast.Name(id="Array"), attr="from_"))
 )
 def rewrite_array_from(node):
     return ast.Call(
-        func=ast.Attribute(value=node.func.value, attr='from'),
+        func=ast.Attribute(value=node.func.value, attr="from"),
         args=node.args,
         keywords=node.keywords,
     )
@@ -107,17 +105,17 @@ def rewrite_array_from(node):
 
 class PythonToJavaScriptTranslator:
     constructor_map = {
-        'list': 'Array',
-        'Array': 'Array',
-        'Date': 'Date',
-        'dict': 'Object',
-        'Map': 'Map',
-        'WeakMap': 'WeakMap',
-        'str': 'String',
-        'String': 'String',
-        'set': 'Set',
-        'Set': 'Set',
-        'WeakSet': 'WeakSet',
+        "list": "Array",
+        "Array": "Array",
+        "Date": "Date",
+        "dict": "Object",
+        "Map": "Map",
+        "WeakMap": "WeakMap",
+        "str": "String",
+        "String": "String",
+        "set": "Set",
+        "Set": "Set",
+        "WeakSet": "WeakSet",
     }
 
     def __init__(self, function):
@@ -136,11 +134,11 @@ class PythonToJavaScriptTranslator:
     def visit(self, node):
         node = rewrite(node)
         typename = node.__class__.__name__
-        method_name = 'visit_{}'.format(typename)
+        method_name = "visit_{}".format(typename)
         method = getattr(self, method_name, None)
         if method is None:
             raise NotImplementedError(
-                '{!r} nodes not yet implemented'.format(method_name)
+                "{!r} nodes not yet implemented".format(method_name)
             )
         assert callable(method)
 
@@ -148,158 +146,140 @@ class PythonToJavaScriptTranslator:
         return result
 
     def visit_Name(self, node):
-        if self.current_class is not None and node.id == 'self':
-            return 'this'
+        if self.current_class is not None and node.id == "self":
+            return "this"
         return node.id
 
     def visit_Yield(self, node):
         self.is_generator = True
-        return 'yield {}'.format(self.visit(node.value))
+        return "yield {}".format(self.visit(node.value))
 
     def visit_YieldFrom(self, node):
         self.is_generator = True
-        return 'yield* {}'.format(self.visit(node.value))
+        return "yield* {}".format(self.visit(node.value))
 
     @semicolon
     def visit_Assign(self, node):
         try:
             (target,) = node.targets
         except ValueError:
-            raise NotImplementedError(
-                'Only single assignment supported for now'
-            )
+            raise NotImplementedError("Only single assignment supported for now")
 
         if not isinstance(target, (ast.Name, ast.Subscript, ast.Attribute)):
             raise NotImplementedError(
-                'Only index, attribute, and variable name assigment '
-                'supported, got {}'.format(type(target).__name__)
+                "Only index, attribute, and variable name assigment "
+                "supported, got {}".format(type(target).__name__)
             )
 
         is_name = isinstance(target, ast.Name)
         compiled_target = self.visit(target)
         if not is_name or (
-            self.current_class is not None
-            and compiled_target.startswith('this.')
+            self.current_class is not None and compiled_target.startswith("this.")
         ):
             self.scope[compiled_target] = compiled_target
-        return '{} = {}'.format(
-            self.scope[compiled_target], self.visit(node.value)
-        )
+        return "{} = {}".format(self.scope[compiled_target], self.visit(node.value))
 
     def translate_special_method(self, name):
-        return {'__init__': 'constructor'}.get(name, name)
+        return {"__init__": "constructor"}.get(name, name)
 
     def visit_FunctionDef(self, node):
         self.current_function = node
 
         is_property_getter = any(
-            getattr(dec, 'id', None) == 'property'
-            for dec in node.decorator_list
+            getattr(dec, "id", None) == "property" for dec in node.decorator_list
         )
 
         if self.current_class is None:  # not a method
             if is_property_getter:
-                raise TypeError(
-                    'Functions cannot be properties, only methods can'
-                )
-            prefix = 'function'
+                raise TypeError("Functions cannot be properties, only methods can")
+            prefix = "function"
         else:
             if is_property_getter and self.is_generator:
-                raise TypeError('generator methods cannot be properties')
-            prefix = 'get ' * is_property_getter
+                raise TypeError("generator methods cannot be properties")
+            prefix = "get " * is_property_getter
 
         with self.local_scope():
             body = indent(map(self.visit, node.body))
 
             if self.is_generator:
-                prefix += '* '
+                prefix += "* "
             else:
-                prefix += ' ' * (self.current_class is None)
+                prefix += " " * (self.current_class is None)
 
             lines = [
                 prefix
                 + self.translate_special_method(node.name)
-                + '({}) {{'.format(self.visit(node.args)),
+                + "({}) {{".format(self.visit(node.args)),
                 body,
-                '}',
+                "}",
             ]
 
             self.current_function = None
             self.is_generator = False
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     @semicolon
     def visit_Return(self, node):
-        return 'return {}'.format(self.visit(node.value))
+        return "return {}".format(self.visit(node.value))
 
     def visit_Add(self, node):
-        return '+'
+        return "+"
 
     def visit_Sub(self, node):
-        return '-'
+        return "-"
 
     def visit_Mult(self, node):
-        return '*'
+        return "*"
 
     def visit_Div(self, node):
-        return '/'
+        return "/"
 
     def visit_FloorDiv(self, node):
-        assert False, 'should never reach FloorDiv'
+        assert False, "should never reach FloorDiv"
 
     def visit_Pow(self, node):
-        assert False, 'should never reach Pow'
+        assert False, "should never reach Pow"
 
     def visit_UnaryOp(self, node):
-        return '({}{})'.format(self.visit(node.op), self.visit(node.operand))
+        return "({}{})".format(self.visit(node.op), self.visit(node.operand))
 
     def visit_USub(self, node):
-        return '-'
+        return "-"
 
     def visit_UAdd(self, node):
-        return '+'
+        return "+"
 
     def visit_BinOp(self, node):
         left, op, right = node.left, node.op, node.right
 
         if isinstance(op, ast.Pow):
-            return 'Math.pow({}, {})'.format(
-                self.visit(left), self.visit(right)
-            )
+            return "Math.pow({}, {})".format(self.visit(left), self.visit(right))
         elif isinstance(op, ast.FloorDiv):
-            return 'Math.floor({} / {})'.format(
-                self.visit(left), self.visit(right)
-            )
-        return '({} {} {})'.format(
-            self.visit(left), self.visit(op), self.visit(right)
-        )
+            return "Math.floor({} / {})".format(self.visit(left), self.visit(right))
+        return "({} {} {})".format(self.visit(left), self.visit(op), self.visit(right))
 
     def visit_Constant(self, node):
         value = node.value
         if value is None:
-            return 'null'
+            return "null"
         if isinstance(value, bool):
-            return 'true' if value else 'false'
+            return "true" if value else "false"
         if isinstance(value, (int, float, str)):
             return repr(value)
         raise NotImplementedError(
-            '{!r} constants not yet implemented'.format(
-                value.__class__.__name__
-            )
+            "{!r} constants not yet implemented".format(value.__class__.__name__)
         )
 
     def visit_NameConstant(self, node):
         value = node.value
         if value is True:
-            return 'true'
+            return "true"
         elif value is False:
-            return 'false'
+            return "false"
         assert (
             value is None
-        ), 'value is not True and is not False, must be None, got {}'.format(
-            value
-        )
-        return 'null'
+        ), "value is not True and is not False, must be None, got {}".format(value)
+        return "null"
 
     def visit_Str(self, node):
         return repr(node.s)
@@ -308,16 +288,16 @@ class PythonToJavaScriptTranslator:
         return repr(node.n)
 
     def visit_List(self, node):
-        return '[{}]'.format(', '.join(map(self.visit, node.elts)))
+        return "[{}]".format(", ".join(map(self.visit, node.elts)))
 
     def visit_Tuple(self, node):
         # tuples becomes lists in javascript
-        return '[{}]'.format(', '.join(map(self.visit, node.elts)))
+        return "[{}]".format(", ".join(map(self.visit, node.elts)))
 
     def visit_Dict(self, node):
-        return '{{{}}}'.format(
-            ', '.join(
-                '[{}]: {}'.format(self.visit(key), self.visit(value))
+        return "{{{}}}".format(
+            ", ".join(
+                "[{}]: {}".format(self.visit(key), self.visit(value))
                 for key, value in zip(node.keys, node.values)
             )
         )
@@ -327,79 +307,77 @@ class PythonToJavaScriptTranslator:
         return self.visit(node.value)
 
     def visit_Starred(self, node):
-        return '...{}'.format(self.visit(node.value))
+        return "...{}".format(self.visit(node.value))
 
     def visit_Call(self, node):
         thing_to_call = self.visit(node.func)
         constructors = self.__class__.constructor_map
-        args = ', '.join(map(self.visit, node.args))
+        args = ", ".join(map(self.visit, node.args))
         try:
             thing_to_call = constructors[thing_to_call]
         except KeyError:
-            format_string = '{}({})'
+            format_string = "{}({})"
         else:
-            format_string = '(new {}({}))'
+            format_string = "(new {}({}))"
         return format_string.format(thing_to_call, args)
 
     def visit_Attribute(self, node):
-        return '{}.{}'.format(self.visit(node.value), node.attr)
+        return "{}.{}".format(self.visit(node.value), node.attr)
 
     def visit_For(self, node):
         lines = [
-            'for (let {} of {}) {{'.format(
+            "for (let {} of {}) {{".format(
                 self.visit(node.target), self.visit(node.iter)
             )
         ]
         with self.local_scope():
             lines.append(indent(map(self.visit, node.body)))
-        lines.append('}')
-        return '\n'.join(lines)
+        lines.append("}")
+        return "\n".join(lines)
 
     def visit_While(self, node):
-        lines = ['while ({}) {{'.format(self.visit(node.test))]
+        lines = ["while ({}) {{".format(self.visit(node.test))]
         with self.local_scope():
             lines.append(indent(map(self.visit, node.body)))
-        lines.append('}')
-        return '\n'.join(lines)
+        lines.append("}")
+        return "\n".join(lines)
 
     @semicolon
     def visit_Break(self, node):
-        return 'break'
+        return "break"
 
     @semicolon
     def visit_Continue(self, node):
-        return 'continue'
+        return "continue"
 
     def visit_Eq(self, node):
-        return '==='
+        return "==="
 
     def visit_NotEq(self, node):
-        return '!=='
+        return "!=="
 
     def visit_Or(self, node):
-        return '||'
+        return "||"
 
     def visit_And(self, node):
-        return '&&'
+        return "&&"
 
     def visit_BoolOp(self, node):
-        return '({})'.format(
-            ' {} '.format(self.visit(node.op)).join(
-                map(self.visit, node.values)
-            )
+        return "({})".format(
+            " {} ".format(self.visit(node.op)).join(map(self.visit, node.values))
         )
 
     def visit_Lt(self, node):
-        return '<'
+        return "<"
 
     def visit_LtE(self, node):
-        return '<='
+        return "<="
 
     def visit_Gt(self, node):
-        return '>'
+        return ">"
 
     def visit_GtE(self, node):
-        return '>='
+        return ">="
 
     def visit_Compare(self, node):
         rights = node.comparators
@@ -409,40 +387,36 @@ class PythonToJavaScriptTranslator:
         comparisons = []
         for op, right in zip(ops, rights):
             comparisons.append(
-                '({} {} {})'.format(
-                    self.visit(left), self.visit(op), self.visit(right)
-                )
+                "({} {} {})".format(self.visit(left), self.visit(op), self.visit(right))
             )
             left = right
-        return ' && '.join(comparisons)
+        return " && ".join(comparisons)
 
     @semicolon
     def visit_AugAssign(self, node):
-        return '{} {}= {}'.format(
-            self.visit(node.target),
-            self.visit(node.op),
-            self.visit(node.value),
+        return "{} {}= {}".format(
+            self.visit(node.target), self.visit(node.op), self.visit(node.value),
         )
 
     def visit_Module(self, node):
-        return '\n\n'.join(map(self.visit, node.body))
+        return "\n\n".join(map(self.visit, node.body))
 
     def visit_arg(self, node):
-        if self.current_class is not None and node.arg == 'self':
-            return ''
+        if self.current_class is not None and node.arg == "self":
+            return ""
         return node.arg
 
     def visit_arguments(self, node):
         args = list(filter(None, map(self.visit, node.args[:])))
         vararg = node.vararg
         if vararg is not None:
-            args.append('...{}'.format(vararg.arg))
-        return ', '.join(args)
+            args.append("...{}".format(vararg.arg))
+        return ", ".join(args)
 
     def visit_Lambda(self, node):
         args = node.args
         generated_args = self.visit(args)
-        return '(({}) => {})'.format(generated_args, self.visit(node.body))
+        return "(({}) => {})".format(generated_args, self.visit(node.body))
 
     @contextlib.contextmanager
     def local_scope(self):
@@ -455,50 +429,46 @@ class PythonToJavaScriptTranslator:
             self.scope = self.scope.parents
 
     def visit_If(self, node):
-        lines = ['if ({}) {{'.format(self.visit(node.test))]
+        lines = ["if ({}) {{".format(self.visit(node.test))]
 
         with self.local_scope():
             lines.append(indent(map(self.visit, node.body)))
-            lines.append('}')
+            lines.append("}")
 
         if node.orelse:
-            lines[-1] += ' else {'
+            lines[-1] += " else {"
             with self.local_scope():
                 lines.append(indent(map(self.visit, node.orelse)))
-                lines.append('}')
-        return '\n'.join(lines)
+                lines.append("}")
+        return "\n".join(lines)
 
     def visit_IfExp(self, node):
-        return '({} ? {} : {})'.format(
-            self.visit(node.test),
-            self.visit(node.body),
-            self.visit(node.orelse),
+        return "({} ? {} : {})".format(
+            self.visit(node.test), self.visit(node.body), self.visit(node.orelse),
         )
 
     def visit_Index(self, node):
         return self.visit(node.value)
 
     def visit_Subscript(self, node):
-        return '{}[{}]'.format(self.visit(node.value), self.visit(node.slice))
+        return "{}[{}]".format(self.visit(node.value), self.visit(node.slice))
 
     def visit_ClassDef(self, node):
         self.current_class = node
         bases = node.bases
 
-        lines = ['class {}'.format(node.name)]
+        lines = ["class {}".format(node.name)]
         if bases:
-            lines[-1] += ' extends {}'.format(
-                ', '.join(map(self.visit, bases))
-            )
-        lines[-1] += ' {'
+            lines[-1] += " extends {}".format(", ".join(map(self.visit, bases)))
+        lines[-1] += " {"
         lines.append(indent(map(self.visit, node.body)))
-        lines.append('}')
+        lines.append("}")
         self.current_class = None
         self.__class__.constructor_map[node.name] = node.name
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def visit_Not(self, node):
-        return '!'
+        return "!"
 
     def visit_ListComp(self, node):
         """Generate a curried lambda function
@@ -512,9 +482,7 @@ class PythonToJavaScriptTranslator:
         try:
             (generator,) = node.generators
         except ValueError:
-            raise NotImplementedError(
-                'Only single loop comprehensions are allowed'
-            )
+            raise NotImplementedError("Only single loop comprehensions are allowed")
 
         names = find_names(generator.target)
         argslist = [ast.arg(arg=name.id, annotation=None) for name in names]
@@ -537,26 +505,22 @@ class PythonToJavaScriptTranslator:
         if filters:
             filt = ast.BoolOp(op=ast.And(), values=filters)
             # array.filter
-            method = ast.Attribute(value=array, attr='filter', ctx=ast.Load())
+            method = ast.Attribute(value=array, attr="filter", ctx=ast.Load())
             # array.filter(func)
-            array = ast.Call(
-                func=method, args=[lam_sig(body=filt)], keywords=[]
-            )
+            array = ast.Call(func=method, args=[lam_sig(body=filt)], keywords=[])
 
-        method = ast.Attribute(value=array, attr='map', ctx=ast.Load())
-        mapped = ast.Call(
-            func=method, args=[lam_sig(body=node.elt)], keywords=[]
-        )
+        method = ast.Attribute(value=array, attr="map", ctx=ast.Load())
+        mapped = ast.Call(func=method, args=[lam_sig(body=node.elt)], keywords=[])
         result = self.visit(mapped)
         return result
 
     def visit_Delete(self, node):
-        return '\n'.join(
-            'delete {};'.format(self.visit(target)) for target in node.targets
+        return "\n".join(
+            "delete {};".format(self.visit(target)) for target in node.targets
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from . import udf
 
     @udf(
@@ -635,7 +599,7 @@ if __name__ == '__main__':
         baz = foobar // 3
         console.log(baz)  # noqa: F821
 
-        my_obj = {'a': 1, 'b': 2}  # noqa: F841
+        my_obj = {"a": 1, "b": 2}  # noqa: F841
 
         z = (x if y else b) + 2 + foobar
         foo = Rectangle(1, 2)

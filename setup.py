@@ -19,7 +19,7 @@ description = "Ibis BigQuery backend"
 # 'Development Status :: 3 - Alpha'
 # 'Development Status :: 4 - Beta'
 # 'Development Status :: 5 - Production/Stable'
-release_status = "Development Status :: 4 - Beta"
+release_status = "Development Status :: 5 - Production/Stable"
 
 package_root = pathlib.Path(__file__).parent
 
@@ -37,16 +37,22 @@ setuptools.setup(
     version=version,
     description=description,
     long_description=readme,
+    author="Ibis Contributors",
+    author_email=None,
+    maintainer="Tim Swast",
+    maintainer_email="swast@google.com",
     url="https://github.com/ibis-project/ibis-bigquery",
     packages=setuptools.find_packages(),
     python_requires=">=3.7",
     install_requires=[
-        # TODO require ibis 2.0 when it's released
-        "ibis-framework >= 1.2.0,<3.0.0dev",
+        "ibis-framework >=1.2.0,<2.0.0dev",
         "google-cloud-bigquery >=1.12.0,<3.0.0dev",
         "google-cloud-bigquery-storage >=1.0.0,<3.0.0dev",
-        "pyarrow >=1.0.0,<5.0.0dev",
+        "pyarrow >=1.0.0,<7.0.0dev",
         "pydata-google-auth",
+        # Workaround for ibis 1.x incompatibility with SQLAlchemy 1.4
+        # AttributeError: module 'sqlalchemy' has no attribute 'Binary'
+        "sqlalchemy <1.4.0dev",
     ],
     classifiers=[
         release_status,
@@ -57,7 +63,5 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
     ],
     license="Apache 2.0",
-    entry_points={
-        "ibis.backends": ["bigquery = ibis_bigquery"],
-    },
+    entry_points={"ibis.backends": ["bigquery = ibis_bigquery"]},
 )
