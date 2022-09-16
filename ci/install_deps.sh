@@ -1,22 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
-set -x
+set -ex
 
 python -m pip install --upgrade pip
 
 if [ "$IBIS_VERSION" = "github" ] ; then
-    # See https://github.com/pypa/pip/issues/7953
-    echo "
-import site
-import sys
-site.ENABLE_USER_SITE = '--user' in sys.argv[1:]
-$(cat ./ibis/setup.py)" > ./ibis/setup.py
-
-    python -m pip install --user -e ./ibis
+    # these deps are to ensure that unreleased versions of upstream ibis are
+    # reflected in its version
+    python -m pip install --upgrade 'poetry<1.2' 'poetry-dynamic-versioning<0.18.0'
+    python -m pip install 'git+https://github.com/ibis-project/ibis.git@master'
+    python -c 'import ibis; print(ibis.__version__)'
 else
-    python -m pip install --user ibis-framework=="$IBIS_VERSION"
+    python -m pip install ibis-framework=="$IBIS_VERSION"
 fi
 
-python -m pip install --user -e .
-python -m pip install --user pytest
+echo "$PWD"
+python -m pip install ./ibis_bigquery
+python -m pip install pytest

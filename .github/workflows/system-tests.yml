@@ -2,8 +2,7 @@ name: System Tests
 
 on:
   push:
-    branches:
-      - v1
+    branches: main
   schedule:
     - cron: 0 2 * * *
 
@@ -16,38 +15,45 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ibis_version: ["github"]
+        include:
           - python_version: "3.7"
-            "ibis_version": "1.2.0"
+            "ibis_version": "2.0.0"
           - python_version: "3.8"
-            "ibis_version":  "1.3.0"
+            "ibis_version": "2.1.1"
+          - python_version: "3.9"
+            "ibis_version": "3.0.2"
           - python_version: "3.10"
-            "ibis_version": "1.4.0"
+            "ibis_version": "3.0.2"
+          - python_version: "3.10"
+            "ibis_version": "github"
 
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+      with:
+        path: ibis_bigquery
 
     - name: set up python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: checkout ibis
-      uses: actions/checkout@v2
-      with:
-        repository: ibis-project/ibis
-        path: ibis
+    - name: setup virtualenv
+      uses: syphar/restore-virtualenv@v1
 
     - name: install dependencies (ibis ${{ matrix.ibis_version }})
       env:
         IBIS_VERSION: ${{ matrix.ibis_version }}
-      run: ./ci/install_deps.sh
+      run: ./ibis_bigquery/ci/install_deps.sh
 
     - name: set up bigquery credentials
+      working-directory: ibis_bigquery
       run: ./ci/decrypt_secret.sh
       env:
         GCLOUD_KEY_PASSPHRASE: ${{ secrets.GCLOUD_KEY_PASSPHRASE }}
 
     - name: run tests
-      run: GOOGLE_BIGQUERY_PROJECT_ID="ibis-gbq" GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/gcloud-service-key.json" python -m pytest tests/system --save-dataset
+      working-directory: ibis_bigquery
+      run: GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/gcloud-service-key.json" python -m pytest ./tests/system --save-dataset
+      env:
+        GOOGLE_BIGQUERY_PROJECT_ID: ibis-gbq

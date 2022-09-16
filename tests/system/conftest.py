@@ -47,7 +47,7 @@ def default_credentials():
         credentials, project_id = google.auth.default(
             scopes=ibis_bigquery.EXTERNAL_DATA_SCOPES
         )
-    except google.auth.excecptions.DefaultCredentialsError as exc:
+    except google.auth.exceptions.DefaultCredentialsError as exc:
         pytest.skip(f"Could not get GCP credentials: {exc}")
 
     return credentials, project_id
@@ -72,14 +72,18 @@ def credentials(default_credentials):
 @pytest.fixture(scope="session")
 def client(credentials, project_id):
     return bq.connect(
-        project_id=project_id, dataset_id=DATASET_ID, credentials=credentials,
+        project_id=project_id,
+        dataset_id=DATASET_ID,
+        credentials=credentials,
     )
 
 
 @pytest.fixture(scope="session")
 def client2(credentials, project_id):
     return bq.connect(
-        project_id=project_id, dataset_id=DATASET_ID, credentials=credentials,
+        project_id=project_id,
+        dataset_id=DATASET_ID,
+        credentials=credentials,
     )
 
 
@@ -184,7 +188,9 @@ def load_functional_alltypes_data(request, bqclient, create_functional_alltypes_
     filepath = download_file("{}/functional_alltypes.csv".format(TESTING_DATA_URI))
     with open(filepath.name, "rb") as csvfile:
         job = bqclient.load_table_from_file(
-            csvfile, table, job_config=load_config,
+            csvfile,
+            table,
+            job_config=load_config,
         ).result()
     if job.error_result:
         print("error")
@@ -238,7 +244,9 @@ def load_functional_alltypes_parted_data(
     filepath = download_file("{}/functional_alltypes.csv".format(TESTING_DATA_URI))
     with open(filepath.name, "rb") as csvfile:
         job = bqclient.load_table_from_file(
-            csvfile, table, job_config=load_config,
+            csvfile,
+            table,
+            job_config=load_config,
         ).result()
     if job.error_result:
         print("error")
@@ -261,7 +269,9 @@ def load_struct_table_data(request, bqclient, struct_bq_table):
     filepath = download_file("{}/struct_table.avro".format(TESTING_DATA_URI))
     with open(filepath.name, "rb") as avrofile:
         job = bqclient.load_table_from_file(
-            avrofile, struct_bq_table, job_config=load_config,
+            avrofile,
+            struct_bq_table,
+            job_config=load_config,
         ).result()
     if job.error_result:
         print("error")
