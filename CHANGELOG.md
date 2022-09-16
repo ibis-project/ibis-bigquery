@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.2.0](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.3...v2.2.0) (2022-09-16)
+
+
+### Features
+
+* Add difference and intersect  BigQuery classes ([#88](https://github.com/ibis-project/ibis-bigquery/issues/88)) ([d3acf50](https://github.com/ibis-project/ibis-bigquery/commit/d3acf50de9d8e9015819efe300b4b5f9615c027a))
+* Add rewrite function for `ops.FloorDivide` ([#85](https://github.com/ibis-project/ibis-bigquery/issues/85)) ([a04a674](https://github.com/ibis-project/ibis-bigquery/commit/a04a6741d99e037aaadee3eafc913980a8ade134))
+* **ibis_bigquery/registry.py:** add wiring for bigquery-supported ibis geospatial operations ([#143](https://github.com/ibis-project/ibis-bigquery/issues/143)) ([b35cda9](https://github.com/ibis-project/ibis-bigquery/commit/b35cda9705c1c75b8091ccfa3a07455279746690))
+* partial support for integer to timestamp with nanosecond units ([#138](https://github.com/ibis-project/ibis-bigquery/issues/138)) ([e3997d4](https://github.com/ibis-project/ibis-bigquery/commit/e3997d42752ec49f4b8c8625097682b27ef4d350))
+
+
+### Bug Fixes
+
+* **compat:** fix failing approx methods against ibis `master` ([#142](https://github.com/ibis-project/ibis-bigquery/issues/142)) ([55a831a](https://github.com/ibis-project/ibis-bigquery/commit/55a831a43b0f28d70173db2e8989e4047769d653))
+* **deps:** unconstrain pyarrow to support 8 and 9 ([#145](https://github.com/ibis-project/ibis-bigquery/issues/145)) ([3ada400](https://github.com/ibis-project/ibis-bigquery/commit/3ada400325681855f8afc1921039b50c350167a7))
+
+
+### Dependencies
+
+* require sqlalchemy for ibis SQL backend ([#144](https://github.com/ibis-project/ibis-bigquery/issues/144)) ([bb76554](https://github.com/ibis-project/ibis-bigquery/commit/bb765542f9b2bf31107ccd95563b6a0354f81898))
+
 ### [2.1.3](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.2...v2.1.3) (2022-05-25)
 
 
