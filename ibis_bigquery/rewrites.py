@@ -11,6 +11,11 @@ def bigquery_day_of_week_name(e):
     return arg.strftime("%A")
 
 
+def bq_floor_divide(expr):
+    left, right = expr.op().args
+    return left.div(right).floor()
+
+
 def identical_to(expr):
     left, right = expr.op().args
     return (left.isnull() & right.isnull()) | (left == right)
@@ -46,6 +51,7 @@ def bigquery_any_all_no_op(expr):
 REWRITES = {
     **sql_compiler.ExprTranslator._rewrites,
     ops.DayOfWeekName: bigquery_day_of_week_name,
+    ops.FloorDivide: bq_floor_divide,
     ops.IdenticalTo: identical_to,
     ops.Log2: log2,
     ops.Sum: bq_sum,
