@@ -1,8 +1,8 @@
 Ibis BigQuery backend
 =====================
 
-This package provides a [BigQuery](https://cloud.google.com/bigquery) backend
-for [Ibis](https://ibis-project.org/).
+This package provides a `BigQuery <https://cloud.google.com/bigquery>`_ backend
+for `Ibis <https://ibis-project.org/>`_.
 
 Installation
 ------------
