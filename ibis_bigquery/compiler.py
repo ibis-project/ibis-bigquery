@@ -2,8 +2,10 @@
 
 from functools import partial
 
-import ibis.expr.lineage as lin
+import ibis.common.graph as lin
 import regex as re
+import ibis.expr.types as ir
+import ibis.expr.operations as ops
 import toolz
 from ibis.backends.base.sql import compiler as sql_compiler
 
@@ -95,7 +97,7 @@ class BigQueryCompiler(sql_compiler.Compiler):
         """Generate DDL for temporary resources."""
         queries = map(
             partial(BigQueryUDFDefinition, context=context),
-            lin.traverse(find_bigquery_udf, expr),
+            lin.traverse(find_bigquery_udf, expr, filter=(ops.Node, ir.Expr)),
         )
 
         # UDFs are uniquely identified by the name of the Node subclass we

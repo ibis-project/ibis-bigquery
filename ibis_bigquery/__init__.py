@@ -2,6 +2,7 @@
 import warnings
 from typing import Optional, Tuple
 
+from urllib.parse import urlparse
 import google.auth.credentials
 import google.cloud.bigquery as bq
 import ibis.expr.schema as sch
@@ -55,6 +56,10 @@ class Backend(BaseSQLBackend):
     compiler = BigQueryCompiler
     database_class = BigQueryDatabase
     table_class = BigQueryTable
+
+    def _from_url(self, url):
+        p = urlparse(url)
+        return self.connect(project_id=p.netloc, dataset_id=p.path)
 
     def connect(
         self,
