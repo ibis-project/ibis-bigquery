@@ -2,7 +2,11 @@
 
 from functools import partial
 
-import ibis.common.graph as lin
+try:
+    import ibis.expr.lineage as lin  # v3.2
+except ImportError:
+    import ibis.common.graph as lin  # v4.0
+
 import regex as re
 import ibis.expr.types as ir
 import ibis.expr.operations as ops

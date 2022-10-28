@@ -13,7 +13,11 @@ except ImportError:
     import ibis.common as com
 
 import ibis.expr.datatypes as dt
-import ibis.common.graph as lin
+try:
+    import ibis.expr.lineage as lin  # v3.2
+except ImportError:
+    import ibis.common.graph as lin  # v4.0
+
 import ibis.expr.operations as ops
 import ibis.expr.schema as sch
 import ibis.expr.types as ir
