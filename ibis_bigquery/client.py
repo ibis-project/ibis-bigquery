@@ -13,6 +13,7 @@ except ImportError:
     import ibis.common as com
 
 import ibis.expr.datatypes as dt
+
 try:
     import ibis.expr.lineage as lin  # v3.2
 except ImportError:

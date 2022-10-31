@@ -1,8 +1,8 @@
 """BigQuery public API."""
 import warnings
 from typing import Optional, Tuple
-
 from urllib.parse import urlparse
+
 import google.auth.credentials
 import google.cloud.bigquery as bq
 import ibis.expr.schema as sch
