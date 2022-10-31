@@ -205,6 +205,11 @@ def _log(translator, expr):
 
 
 def _literal(translator, expr):
+    try:
+        # XXX: handle 4.0 compatibility, where `expr` is actually an op
+        expr = expr.to_expr()
+    except AttributeError:
+        pass
 
     if isinstance(expr, ir.NumericValue):
         value = expr.op().value
