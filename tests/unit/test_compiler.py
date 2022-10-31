@@ -92,11 +92,11 @@ def test_literal_date(case, expected, dtype):
 )
 def test_day_of_week(case, expected, dtype, strftime_func):
     date_var = ibis.literal(case, type=dtype)
-    expr_index = date_var.day_of_week.index()
+    expr_index = date_var.day_of_week.index().name("tmp")
     result = ibis_bigquery.compile(expr_index)
     assert result == f"SELECT MOD(EXTRACT(DAYOFWEEK FROM {expected}) + 5, 7) AS `tmp`"
 
-    expr_name = date_var.day_of_week.full_name()
+    expr_name = date_var.day_of_week.full_name().name("tmp")
     result = ibis_bigquery.compile(expr_name)
     if strftime_func == "FORMAT_TIMESTAMP":
         assert result == f"SELECT {strftime_func}('%A', {expected}, 'UTC') AS `tmp`"
