@@ -444,7 +444,11 @@ def bigquery_compile_notall(translator, expr):
 
 
 def _alias(translator, expr):
-    return f"{translator.translate(expr.op())} AS {expr.op().name}"
+    try:
+        op = expr.op()
+    except AttributeError:
+        op = expr
+    return f"{translator.translate(op)} AS {op.name}"
 
 
 OPERATION_REGISTRY = {
