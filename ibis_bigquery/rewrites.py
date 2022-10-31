@@ -8,22 +8,25 @@ from ibis.backends.base.sql import compiler as sql_compiler
 def bigquery_day_of_week_name(e):
     """Convert TIMESTAMP to day-of-week string."""
     arg = e.op().args[0]
-    return arg.strftime("%A")
+    return ops.Strftime(arg, "%A").to_expr()
 
 
 def bq_floor_divide(expr):
     left, right = expr.op().args
-    return left.div(right).floor()
+    return ops.Floor(ops.Div(left, right)).to_expr()
 
 
 def identical_to(expr):
     left, right = expr.op().args
-    return (left.isnull() & right.isnull()) | (left == right)
+    return ops.Or(
+        ops.And(ops.IsNull(left).to_expr(), ops.IsNull(right).to_expr()).to_expr(),
+        ops.Equals(left, right).to_expr(),
+    ).to_expr()
 
 
 def log2(expr):
     (arg,) = expr.op().args
-    return arg.log(2)
+    return ops.Log(arg, ops.Literal(2).to_expr()).to_expr()
 
 
 def bq_sum(expr):
