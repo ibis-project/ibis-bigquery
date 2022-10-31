@@ -15,7 +15,10 @@ except ImportError:
         pass
 
 
-from ibis.expr.signature import Argument as Arg
+try:
+    from ibis.expr.signature import Argument as Arg
+except ImportError:
+    from ibis.common.annotations import Argument as Arg
 
 from ..compiler import compiles
 from ..datatypes import UDFContext, ibis_type_to_bigquery_type
