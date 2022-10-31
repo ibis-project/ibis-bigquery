@@ -448,7 +448,7 @@ def _alias(translator, expr):
         op = expr.op()
     except AttributeError:
         op = expr
-    return f"{translator.translate(op)} AS {op.name}"
+    return f"{translator.translate(op.arg)} AS {op.name}"
 
 
 OPERATION_REGISTRY = {
