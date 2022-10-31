@@ -237,6 +237,8 @@ def _literal(translator, expr):
 
     try:
         return literal(translator, expr)
+    except AttributeError:
+        return literal(translator, expr.op())
     except NotImplementedError:
         if isinstance(expr, ir.ArrayValue):
             return _array_literal_format(expr)
