@@ -121,8 +121,8 @@ def test_day_of_week(case, expected, dtype, strftime_func):
 )
 @pytest.mark.skipif(IBIS_VERSION < IBIS_1_4_VERSION, reason="requires ibis 1.4+")
 def test_hash(case, expected, dtype):
-    string_var = ibis.literal(case, type=dtype).name("tmp")
-    expr = string_var.hash(how="farm_fingerprint")
+    string_var = ibis.literal(case, type=dtype)
+    expr = string_var.hash(how="farm_fingerprint").name("tmp")
     result = ibis_bigquery.compile(expr)
     assert result == f"SELECT farm_fingerprint({expected}) AS `tmp`"
 
