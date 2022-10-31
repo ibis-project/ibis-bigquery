@@ -13,7 +13,7 @@ def bigquery_day_of_week_name(e):
 
 def bq_floor_divide(expr):
     left, right = expr.op().args
-    return ops.Floor(ops.Div(left, right)).to_expr()
+    return ops.Floor(ops.Div(left, right).to_expr()).to_expr()
 
 
 def identical_to(expr):

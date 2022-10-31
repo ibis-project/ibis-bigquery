@@ -443,6 +443,10 @@ def bigquery_compile_notall(translator, expr):
     return "LOGICAL_OR(NOT ({}))".format(*map(translator.translate, expr.op().args))
 
 
+def _alias(translator, expr):
+    return f"{translator.translate(expr.op())} AS {expr.op().name}"
+
+
 OPERATION_REGISTRY = {
     **operation_registry,
     # Literal
@@ -548,7 +552,13 @@ OPERATION_REGISTRY = {
     ops.GeoY: unary("ST_Y"),
     ops.GeoYMax: _geo_boundingbox("ymax"),
     ops.GeoYMin: _geo_boundingbox("ymin"),
+    ops.Alias: _alias,
 }
+
+try:
+    OPERATION_REGISTRY[ops.Alias] = _alias
+except AttributeError:
+    pass
 
 
 def _try_register_op(op_name: str, value):
