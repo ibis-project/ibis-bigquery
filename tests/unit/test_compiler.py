@@ -182,7 +182,7 @@ def test_hash(case, expected, dtype):
 )
 @pytest.mark.skipif(IBIS_VERSION < IBIS_1_4_VERSION, reason="requires ibis 1.4+")
 def test_hashbytes(case, expected, how, dtype):
-    var = ibis.literal(case, type=dtype)
+    var = ibis.literal(case, type=dtype).name("tmp")
     expr = var.hashbytes(how=how)
     result = ibis_bigquery.compile(expr)
     assert result == f"SELECT {expected} AS `tmp`"
@@ -214,7 +214,7 @@ def test_hashbytes(case, expected, how, dtype):
     ),
 )
 def test_integer_to_timestamp(case, unit, expected):
-    expr = ibis.literal(case, type=dt.int64).to_timestamp(unit=unit)
+    expr = ibis.literal(case, type=dt.int64).to_timestamp(unit=unit).name("tmp")
     result = ibis_bigquery.compile(expr)
     assert result == f"SELECT {expected} AS `tmp`"
 
@@ -354,7 +354,7 @@ def test_projection_fusion_only_peeks_at_immediate_parent(expected):
 )
 def test_temporal_truncate(unit, expected_unit, expected_func):
     t = ibis.table([("a", getattr(dt, expected_func.lower()))], name="t")
-    expr = t.a.truncate(unit)
+    expr = t.a.truncate(unit).name("tmp")
     result = ibis_bigquery.compile(expr)
     expected = f"""\
 SELECT {expected_func}_TRUNC(`a`, {expected_unit}) AS `tmp`
@@ -365,7 +365,7 @@ FROM t"""
 @pytest.mark.parametrize("kind", ["date", "time"])
 def test_extract_temporal_from_timestamp(kind):
     t = ibis.table([("ts", dt.timestamp)], name="t")
-    expr = getattr(t.ts, kind)()
+    expr = getattr(t.ts, kind)().name("tmp")
     result = ibis_bigquery.compile(expr)
     expected = f"""\
 SELECT {kind.upper()}(`ts`) AS `tmp`
@@ -374,7 +374,7 @@ FROM t"""
 
 
 def test_now():
-    expr = ibis.now()
+    expr = ibis.now().name("tmp")
     result = ibis_bigquery.compile(expr)
     expected = "SELECT CURRENT_TIMESTAMP() AS `tmp`"
     assert result == expected
@@ -393,7 +393,7 @@ FROM t"""
 
 def test_substring():
     t = ibis.table([("value", "string")], name="t")
-    expr = t["value"].substr(3, 1)
+    expr = t["value"].substr(3, 1).name("tmp")
     expected = """\
 SELECT substr(`value`, 3 + 1, 1) AS `tmp`
 FROM t"""
@@ -404,7 +404,7 @@ FROM t"""
 
 def test_substring_neg_length():
     t = ibis.table([("value", "string")], name="t")
-    expr = t["value"].substr(3, -1)
+    expr = t["value"].substr(3, -1).name("tmp")
     with pytest.raises(Exception) as exception_info:
         ibis_bigquery.compile(expr)
 
