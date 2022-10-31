@@ -13,8 +13,6 @@ import ibis_bigquery
 
 IBIS_VERSION = packaging.version.Version(ibis.__version__)
 IBIS_1_4_VERSION = packaging.version.Version("1.4.0")
-IBIS_3_0_VERSION = packaging.version.Version("3.0.0")
-IBIS_3_0_2_VERSION = packaging.version.Version("3.0.2")
 IBIS_3_1_0_VERSION = packaging.version.Version("3.1.0")
 
 
@@ -46,10 +44,9 @@ IBIS_3_1_0_VERSION = packaging.version.Version("3.1.0")
     ],
 )
 def test_literal_date(case, expected, dtype):
-    expr = ibis.literal(case, type=dtype).year()
+    expr = ibis.literal(case, type=dtype).year().name("tmp")
     result = ibis_bigquery.compile(expr)
-    expected_name = "tmp" if IBIS_VERSION <= IBIS_3_0_2_VERSION else "year"
-    assert result == f"SELECT EXTRACT(year from {expected}) AS `{expected_name}`"
+    assert result == f"SELECT EXTRACT(year from {expected}) AS `tmp`"
 
 
 @pytest.mark.parametrize(
@@ -122,9 +119,8 @@ def test_day_of_week(case, expected, dtype, strftime_func):
         ),
     ],
 )
+@pytest.mark.skipif(IBIS_VERSION < IBIS_1_4_VERSION, reason="requires ibis 1.4+")
 def test_hash(case, expected, dtype):
-    if IBIS_VERSION < IBIS_1_4_VERSION:
-        pytest.skip("requires ibis 1.4+")
     string_var = ibis.literal(case, type=dtype)
     expr = string_var.hash(how="farm_fingerprint")
     result = ibis_bigquery.compile(expr)
@@ -184,9 +180,8 @@ def test_hash(case, expected, dtype):
         ),
     ],
 )
+@pytest.mark.skipif(IBIS_VERSION < IBIS_1_4_VERSION, reason="requires ibis 1.4+")
 def test_hashbytes(case, expected, how, dtype):
-    if IBIS_VERSION < IBIS_1_4_VERSION:
-        pytest.skip("requires ibis 1.4+")
     var = ibis.literal(case, type=dtype)
     expr = var.hashbytes(how=how)
     result = ibis_bigquery.compile(expr)
@@ -247,10 +242,9 @@ def test_integer_to_timestamp(case, unit, expected):
     ],
 )
 def test_literal_timestamp_or_time(case, expected, dtype):
-    expr = ibis.literal(case, type=dtype).hour()
+    expr = ibis.literal(case, type=dtype).hour().name("tmp")
     result = ibis_bigquery.compile(expr)
-    expected_name = "tmp" if IBIS_VERSION <= IBIS_3_0_2_VERSION else "hour"
-    assert result == f"SELECT EXTRACT(hour from {expected}) AS `{expected_name}`"
+    assert result == f"SELECT EXTRACT(hour from {expected}) AS `tmp`"
 
 
 @pytest.mark.parametrize(
@@ -388,9 +382,9 @@ def test_now():
 
 def test_binary():
     t = ibis.table([("value", "double")], name="t")
-    expr = t["value"].cast(dt.binary).name("value_hash")
+    expr = t["value"].cast(dt.binary).name("tmp")
     result = ibis_bigquery.compile(expr)
-    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "value_hash"
+    expected_name = "tmp"
     expected = f"""\
 SELECT CAST(`value` AS BYTES) AS `{expected_name}`
 FROM t"""
@@ -421,9 +415,9 @@ def test_substring_neg_length():
 def test_bucket():
     t = ibis.table([("value", "double")], name="t")
     buckets = [0, 1, 3]
-    expr = t.value.bucket(buckets).name("foo")
+    expr = t.value.bucket(buckets).name("tmp")
     result = ibis_bigquery.compile(expr)
-    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "foo"
+    expected_name = "tmp"
     expected = f"""\
 SELECT
   CASE
@@ -453,9 +447,9 @@ FROM t"""
 def test_window_unbounded(kind, begin, end, expected):
     t = ibis.table([("a", "int64")], name="t")
     kwargs = {kind: (begin, end)}
-    expr = t.a.sum().over(ibis.window(**kwargs))
+    expr = t.a.sum().over(ibis.window(**kwargs)).name("tmp")
     result = ibis_bigquery.compile(expr)
-    expected_name = "tmp" if IBIS_VERSION < IBIS_3_0_VERSION else "sum"
+    expected_name = "tmp"
     assert (
         result
         == f"""\
