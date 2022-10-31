@@ -182,8 +182,8 @@ def test_hash(case, expected, dtype):
 )
 @pytest.mark.skipif(IBIS_VERSION < IBIS_1_4_VERSION, reason="requires ibis 1.4+")
 def test_hashbytes(case, expected, how, dtype):
-    var = ibis.literal(case, type=dtype).name("tmp")
-    expr = var.hashbytes(how=how)
+    var = ibis.literal(case, type=dtype)
+    expr = var.hashbytes(how=how).name("tmp")
     result = ibis_bigquery.compile(expr)
     assert result == f"SELECT {expected} AS `tmp`"
 
@@ -635,7 +635,7 @@ FROM t"""
 def test_geospatial_simplify():
     t = ibis.table([("geog", "geography")], name="t")
 
-    expr = t.geog.simplify(5.2, preserve_collapsed=False)
+    expr = t.geog.simplify(5.2, preserve_collapsed=False).name("tmp")
     result = ibis_bigquery.compile(expr)
     query = """\
 SELECT ST_SIMPLIFY(`geog`, 5.2) AS `tmp`
