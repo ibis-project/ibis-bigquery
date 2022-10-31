@@ -510,7 +510,7 @@ FROM t1"""
 
 def test_geospatial_point():
     t = ibis.table([("lon", "float64"), ("lat", "float64")], name="t")
-    expr = ibis.geo_point(t.lon, t.lat)
+    expr = ibis.geo_point(t.lon, t.lat).name("tmp")
     result = ibis_bigquery.compile(expr)
     query = """\
 SELECT ST_GEOGPOINT(`lon`, `lat`) AS `tmp`
@@ -520,7 +520,7 @@ FROM t"""
 
 def test_geospatial_azimuth():
     t = ibis.table([("p0", "point"), ("p1", "point")], name="t")
-    expr = t.p0.azimuth(t.p1)
+    expr = t.p0.azimuth(t.p1).name("tmp")
     result = ibis_bigquery.compile(expr)
     query = """\
 SELECT ST_AZIMUTH(`p0`, `p1`) AS `tmp`
@@ -530,7 +530,7 @@ FROM t"""
 
 def test_geospatial_unary_union():
     t = ibis.table([("geog", "geography")], name="t")
-    expr = t.geog.unary_union()
+    expr = t.geog.unary_union().name("tmp")
     result = ibis_bigquery.compile(expr)
     query = """\
 SELECT ST_UNION_AGG(`geog`) AS `union`
@@ -557,7 +557,7 @@ FROM t"""
 )
 def test_geospatial_unary(operation, keywords, function, function_args):
     t = ibis.table([("geog", "geography")], name="t")
-    expr = getattr(t.geog, operation)(**keywords)
+    expr = getattr(t.geog, operation)(**keywords).name("tmp")
     result = ibis_bigquery.compile(expr)
     fn_args = ", ".join([""] + function_args) if function_args else ""
     query = f"""\
@@ -587,7 +587,7 @@ FROM t"""
 )
 def test_geospatial_binary(operation, keywords, function, function_args):
     t = ibis.table([("geog0", "geography"), ("geog1", "geography")], name="t")
-    expr = getattr(t.geog0, operation)(t.geog1, **keywords)
+    expr = getattr(t.geog0, operation)(t.geog1, **keywords).name("tmp")
     result = ibis_bigquery.compile(expr)
     fn_args = ", ".join([""] + function_args) if function_args else ""
     query = f"""\
@@ -607,7 +607,7 @@ FROM t"""
 )
 def test_geospatial_minmax(operation, dimension_name):
     t = ibis.table([("geog", "geography")], name="t")
-    expr = getattr(t.geog, operation)()
+    expr = getattr(t.geog, operation)().name("tmp")
     result = ibis_bigquery.compile(expr)
     query = f"""\
 SELECT ST_BOUNDINGBOX(`geog`).{dimension_name} AS `tmp`
@@ -624,7 +624,7 @@ FROM t"""
 )
 def test_geospatial_xy(dimension_name):
     t = ibis.table([("pt", "point")], name="t")
-    expr = getattr(t.pt, dimension_name)()
+    expr = getattr(t.pt, dimension_name)().name("tmp")
     result = ibis_bigquery.compile(expr)
     query = f"""\
 SELECT ST_{dimension_name.upper()}(`pt`) AS `tmp`
@@ -642,7 +642,7 @@ SELECT ST_SIMPLIFY(`geog`, 5.2) AS `tmp`
 FROM t"""
     assert result == query
 
-    expr = t.geog.simplify(5.2, preserve_collapsed=True)
+    expr = t.geog.simplify(5.2, preserve_collapsed=True).name("tmp")
     with pytest.raises(Exception) as exception_info:
         ibis_bigquery.compile(expr)
     expected = "BigQuery simplify does not support preserving collapsed geometries, must pass preserve_collapsed=False"
