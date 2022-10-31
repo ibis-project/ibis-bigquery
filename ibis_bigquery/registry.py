@@ -552,7 +552,6 @@ OPERATION_REGISTRY = {
     ops.GeoY: unary("ST_Y"),
     ops.GeoYMax: _geo_boundingbox("ymax"),
     ops.GeoYMin: _geo_boundingbox("ymin"),
-    ops.Alias: _alias,
 }
 
 try:
