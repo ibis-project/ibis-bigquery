@@ -7,9 +7,9 @@ try:
 except ImportError:
     import ibis.common.graph as lin  # v4.0
 
-import regex as re
-import ibis.expr.types as ir
 import ibis.expr.operations as ops
+import ibis.expr.types as ir
+import regex as re
 import toolz
 from ibis.backends.base.sql import compiler as sql_compiler
 
@@ -99,10 +99,12 @@ class BigQueryCompiler(sql_compiler.Compiler):
     @staticmethod
     def _generate_setup_queries(expr, context):
         """Generate DDL for temporary resources."""
-        queries = map(
-            partial(BigQueryUDFDefinition, context=context),
-            lin.traverse(find_bigquery_udf, expr, filter=(ops.Node, ir.Expr)),
-        )
+        # NB: compatibility with 3.x and 4.x
+        try:
+            nodes = lin.traverse(find_bigquery_udf, expr, filter=(ops.Node, ir.Expr))
+        except TypeError:
+            nodes = lin.traverse(find_bigquery_udf, expr)
+        queries = map(partial(BigQueryUDFDefinition, context=context), nodes)
 
         # UDFs are uniquely identified by the name of the Node subclass we
         # generate.
