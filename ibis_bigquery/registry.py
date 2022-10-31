@@ -59,7 +59,12 @@ def _cast(translator, expr):
     op = expr.op()
     arg, target_type = op.args
     arg_formatted = translator.translate(arg)
-    return bigquery_cast(arg_formatted, arg.type(), target_type)
+    # NB: compat for ibis 3.2 and 4.0
+    try:
+        input_dtype = arg.type()
+    except AttributeError:
+        input_dtype = arg.output_dtype
+    return bigquery_cast(arg_formatted, input_dtype, target_type)
 
 
 def integer_to_timestamp(translator: compiler.ExprTranslator, expr: ibis.Expr) -> str:
