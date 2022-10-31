@@ -533,7 +533,7 @@ def test_geospatial_unary_union():
     expr = t.geog.unary_union().name("tmp")
     result = ibis_bigquery.compile(expr)
     query = """\
-SELECT ST_UNION_AGG(`geog`) AS `union`
+SELECT ST_UNION_AGG(`geog`) AS `tmp`
 FROM t"""
     assert result == query
 
