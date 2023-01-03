@@ -325,7 +325,7 @@ class Backend(BaseSQLBackend):
         else:
             return True
 
-    def exists_table(self, name: str, database: str = None) -> bool:
+    def exists_table(self, name: str, database: Optional[str] = None) -> bool:
         """
         Return whether a table name exists in the database.
 
