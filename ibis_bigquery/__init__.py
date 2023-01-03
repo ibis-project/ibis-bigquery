@@ -188,11 +188,12 @@ class Backend(BaseSQLBackend):
         return rename_partitioned_column(t, bq_table, self.partition_column)
 
     def _fully_qualified_name(self, name, database):
-        default_project, default_dataset = self._parse_project_and_dataset(database)
         parts = name.split(".")
         if len(parts) == 3:
             return name
-        elif len(parts) == 2:
+
+        default_project, default_dataset = self._parse_project_and_dataset(database)
+        if len(parts) == 2:
             return "{}.{}".format(default_project, name)
         elif len(parts) == 1:
             return "{}.{}.{}".format(default_project, default_dataset, name)
