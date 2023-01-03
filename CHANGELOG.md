@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.2.1](https://github.com/ibis-project/ibis-bigquery/compare/v2.2.0...v2.2.1) (2023-01-03)
+
+
+### Bug Fixes
+
+* address compatibility issues in `table()` with fully-qualified table names ([#153](https://github.com/ibis-project/ibis-bigquery/issues/153)) ([91e529a](https://github.com/ibis-project/ibis-bigquery/commit/91e529ab08076af85eeb2727aa3078aa0b56eea0))
+
+
+### Documentation
+
+* reformat hyperlinks ([#147](https://github.com/ibis-project/ibis-bigquery/issues/147)) ([9d1d5fc](https://github.com/ibis-project/ibis-bigquery/commit/9d1d5fc44286a67f84ea14db6187f75d46f16dc5))
+
 ## [2.2.0](https://github.com/ibis-project/ibis-bigquery/compare/v2.1.3...v2.2.0) (2022-09-16)
 
 
