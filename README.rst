@@ -1,3 +1,12 @@
+Change of Address
+=================
+
+The `BigQuery <https://cloud.google.com/bigquery>`_ backend is now maintained
+as a first-party backend in `Ibis <https://github.com/ibis-project/ibis>`_.
+
+You can find updated installation and usage instructions in the `Ibis
+documentation <https://ibis-project.org/backends/BigQuery/>`_.
+
 Ibis BigQuery backend
 =====================
 
